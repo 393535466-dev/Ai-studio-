@@ -175,14 +175,14 @@ workflow:
         context:
           enabled: false
           variable_selector: []
-        desc: 云端演示版：导入后请打开本节点，在模型下拉里换成你账号里可用的模型（GPT / DeepSeek / 通义等均可）。提示词与本地版完全一致。
+        desc: 云端演示版：默认已选 DeepSeek（对应你账号里的深度求索密钥）。如果你的账号接的是别的模型，打开本节点在模型下拉里换即可。提示词与本地版完全一致。
         model:
           completion_params:
             max_tokens: 1400
             temperature: 0.2
           mode: chat
-          name: gpt-4o-mini
-          provider: langgenius/openai/openai
+          name: deepseek-chat
+          provider: langgenius/deepseek/deepseek
         prompt_template:
         - id: sys-ecom-0001
           role: system
