@@ -17,6 +17,7 @@ workflow:
     - env
     - API_BASE
     value: https://REPLACE-WITH-YOUR-SERVER-URL
+    value_type: string
   features:
     file_upload:
       image:
