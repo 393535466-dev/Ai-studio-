@@ -193,20 +193,21 @@ workflow:
       type: custom
       width: 244
     - data:
-        code: "import json\nimport re\n\ndef extract_plan(text):\n    \"\"\"容错解析 LLM 的结构化输出：兼容 Markdown 围栏、前后解释文字、尾随逗号。\"\"\"\n    s = (text or \"\").strip()\n    s = re.sub(r\"^```(?:json)?\\s*\", \"\"\
-          , s)\n    s = re.sub(r\"\\s*```$\", \"\", s).strip()\n    try:\n        return json.loads(s)\n    except Exception:\n        pass\n    i, j = s.find(\"{\"), s.rfind(\"}\")\n    if i >= 0 and j\
-          \ > i:\n        for cand in (s[i:j+1], re.sub(r\",\\s*([}\\]])\", r\"\\1\", s[i:j+1])):\n            try:\n                return json.loads(cand)\n            except Exception:\n            \
-          \    pass\n    return None\n\n\ndef main(llm_text, sku_count, candidates, product_name):\n    plan = extract_plan(llm_text)\n    if plan is None:\n        # 小模型偶发输出不合规 JSON：本地规则兜底，绝不转云端重试\n  \
-          \      n = int(sku_count or 1)\n        c = int(candidates or 4)\n        plan = {\n            \"plan_id\": \"ecom-fallback\",\n            \"engine\": \"Z-Image-Turbo Q5_K_S\",\n           \
-          \ \"anchor_lock\": True,\n            \"quality_gate\": \"主体形状 / LOGO / 配色与锚图一致\",\n            \"fallback\": \"1024→768 → 候选数减半 → 排队 → 取消\",\n            \"tasks\": [\n                {\"sku\"\
-          : \"SKU-%02d\" % (i + 1), \"style\": \"极简白棚\",\n                 \"size\": \"1:1 主图\", \"candidates\": c,\n                 \"prompt\": \"product photo of %s, anchored reference, clean studio\"\
-          \ % product_name,\n                 \"negative\": \"deformed, watermark, extra text\", \"seed\": 1000 + i * 37}\n                for i in range(n)\n            ],\n        }\n    tasks = plan.get(\"\
-          tasks\", [])\n    n = int(sku_count or len(tasks) or 1)\n    c = int(candidates or 4)\n    tasks = tasks[:n]\n    for i, t in enumerate(tasks):\n        t[\"candidates\"] = c\n        t.setdefault(\"\
-          sku\", \"SKU-%02d\" % (i + 1))\n        t.setdefault(\"prompt\", \"product photo, anchored reference\")\n        t.setdefault(\"negative\", \"deformed, watermark\")\n        t.setdefault(\"seed\"\
-          , 1000 + i * 37)\n        t[\"anchor_lock\"] = True\n    plan[\"tasks\"] = tasks\n    plan[\"anchor_lock\"] = True\n    plan[\"fallback\"] = \"1024→768 → 候选数减半 → 排队 → 取消（无云端兜底）\"\n    request\
-          \ = {\n        \"plan_id\": plan.get(\"plan_id\", \"ecom-local\"),\n        \"scene\": \"ecom\",\n        \"engine\": plan.get(\"engine\", \"Z-Image-Turbo Q5_K_S\"),\n        \"anchor_lock\":\
-          \ True,\n        \"local_only\": True,\n        \"tasks\": tasks,\n    }\n    return {\n        \"plan_json\": json.dumps(plan, ensure_ascii=False),\n        \"request_json\": json.dumps(request,\
-          \ ensure_ascii=False),\n        \"task_count\": len(tasks),\n        \"summary\": \"本地编排完成：%d 个 SKU × %d 候选，锚图锁定，单卡串行排队\" % (len(tasks), c),\n    }"
+        code: "import json\nimport re\n\n\ndef extract_plan(text):\n    # 容错解析：兼容 Markdown 围栏、前后解释文字、尾随逗号\n    s = (text or \"\").strip()\n    s = re.sub(r\"^```(?:json)?\\s*\", \"\", s)\n    s = re.sub(r\"\
+          \\s*```$\", \"\", s).strip()\n    try:\n        return json.loads(s)\n    except Exception:\n        pass\n    i, j = s.find(\"{\"), s.rfind(\"}\")\n    if i >= 0 and j > i:\n        for cand\
+          \ in (s[i:j+1], re.sub(r\",\\s*([}\\]])\", r\"\\1\", s[i:j+1])):\n            try:\n                return json.loads(cand)\n            except Exception:\n                pass\n    return None\n\
+          \n\ndef main(llm_text, sku_count, candidates, product_name):\n    raw_text = llm_text or \"\"\n    plan = extract_plan(raw_text)\n    parsed_ok = plan is not None\n    if plan is None:\n     \
+          \   # 本地规则兜底，绝不调用云端模型重试\n        n = int(sku_count or 1)\n        c = int(candidates or 4)\n        plan = {\n            \"plan_id\": \"ecom-fallback\",\n            \"engine\": \"Z-Image-Turbo\
+          \ Q5_K_S\",\n            \"anchor_lock\": True,\n            \"quality_gate\": \"主体形状 / LOGO / 配色与锚图一致\",\n            \"fallback\": \"1024→768 → 候选数减半 → 排队 → 取消\",\n            \"tasks\": [\n\
+          \                {\"sku\": \"SKU-%02d\" % (i + 1), \"style\": \"极简白棚\",\n                 \"size\": \"1:1 主图\", \"candidates\": c,\n                 \"prompt\": \"product photo of %s, anchored\
+          \ reference, clean studio\" % product_name,\n                 \"negative\": \"deformed, watermark, extra text\", \"seed\": 1000 + i * 37}\n                for i in range(n)\n            ],\n \
+          \       }\n    tasks = plan.get(\"tasks\", [])\n    n = int(sku_count or len(tasks) or 1)\n    c = int(candidates or 4)\n    tasks = tasks[:n]\n    for i, t in enumerate(tasks):\n        t[\"\
+          candidates\"] = c\n        t.setdefault(\"sku\", \"SKU-%02d\" % (i + 1))\n        t.setdefault(\"prompt\", \"product photo, anchored reference\")\n        t.setdefault(\"negative\", \"deformed,\
+          \ watermark\")\n        t.setdefault(\"seed\", 1000 + i * 37)\n        t[\"anchor_lock\"] = True\n    plan[\"tasks\"] = tasks\n    plan[\"anchor_lock\"] = True\n    plan[\"fallback\"] = \"1024→768\
+          \ → 候选数减半 → 排队 → 取消（无云端兜底）\"\n    request = {\n        \"plan_id\": plan.get(\"plan_id\", \"ecom-local\"),\n        \"scene\": \"ecom\",\n        \"engine\": plan.get(\"engine\", \"Z-Image-Turbo\
+          \ Q5_K_S\"),\n        \"anchor_lock\": True,\n        \"local_only\": True,\n        \"tasks\": tasks,\n    }\n    summary = \"本地编排完成：%d 个 SKU × %d 候选，锚图锁定，单卡串行排队\" % (len(tasks), c)\n    if not\
+          \ parsed_ok:\n        summary += \" [diag] llm_len=%d head=%r\" % (len(raw_text), raw_text[:80])\n    return {\n        \"plan_json\": json.dumps(plan, ensure_ascii=False),\n        \"request_json\"\
+          : json.dumps(request, ensure_ascii=False),\n        \"task_count\": len(tasks),\n        \"summary\": summary,\n    }\n"
         code_language: python3
         desc: 结构化输出的关键护栏。端侧小模型不保证 100% 吐出合规 JSON，所以在这里做 去围栏、解析、字段补齐、数量裁剪与「无云端」约束复核。
         outputs:

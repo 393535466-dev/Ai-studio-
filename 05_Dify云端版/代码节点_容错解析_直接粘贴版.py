@@ -1,10 +1,11 @@
-# Dify 代码节点专用：全选复制，替换原有代码后保存并发布
+# Dify 代码节点专用（短剧版）：全选复制 → 替换原代码 → 保存 → 发布
 
 import json
 import re
 
+
 def extract_plan(text):
-    """容错解析 LLM 的结构化输出：兼容 Markdown 围栏、前后解释文字、尾随逗号。"""
+    # 容错解析：兼容 Markdown 围栏、前后解释文字、尾随逗号
     s = (text or "").strip()
     s = re.sub(r"^```(?:json)?\s*", "", s)
     s = re.sub(r"\s*```$", "", s).strip()
@@ -23,7 +24,9 @@ def extract_plan(text):
 
 
 def main(llm_text, shot_count, resolution, anchor_lock):
-    plan = extract_plan(llm_text)
+    raw_text = llm_text or ""
+    plan = extract_plan(raw_text)
+    parsed_ok = plan is not None
     if plan is None:
         # 本地规则兜底，绝不调用云端模型重试
         n = int(shot_count or 6)
@@ -49,7 +52,7 @@ def main(llm_text, shot_count, resolution, anchor_lock):
         s.setdefault("action", "情绪延续")
         s.setdefault("prompt", "cinematic still, anchored reference")
         s.setdefault("camera", "固定")
-        s["stage"] = "keyframe"   # 图先行：本轮只排队关键帧，不启动视频
+        s["stage"] = "keyframe"
     plan["shots"] = shots
     plan["boundary"] = "竖屏 9:16 / 单镜头 ≤5s / 图先行 / I2V 5 帧段（无云端兜底）"
     drift = "关闭" in (anchor_lock or "")
@@ -63,10 +66,13 @@ def main(llm_text, shot_count, resolution, anchor_lock):
         "stage": "keyframe",
         "tasks": shots,
     }
+    summary = "本地编排完成：%d 个镜头，均 ≤5s，图先行排队关键帧，re-anchor=%s" % (
+        len(shots), "关" if drift else "开")
+    if not parsed_ok:
+        summary += " [diag] llm_len=%d head=%r" % (len(raw_text), raw_text[:80])
     return {
         "plan_json": json.dumps(plan, ensure_ascii=False),
         "request_json": json.dumps(request, ensure_ascii=False),
         "shot_count": len(shots),
-        "summary": "本地编排完成：%d 个镜头，均 ≤5s，图先行排队关键帧，re-anchor=%s"
-                   % (len(shots), "关" if drift else "开"),
+        "summary": summary,
     }
