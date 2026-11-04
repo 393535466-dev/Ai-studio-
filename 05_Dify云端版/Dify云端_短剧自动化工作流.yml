@@ -10,13 +10,13 @@ version: 0.1.5
 workflow:
   conversation_variables: []
   environment_variables:
-  - description: 你的出图编排服务公网地址（拿到后改这里，HTTP 节点不用动）。示例：https://xxxx.ngrok-free.app 或 https://xxxx.onrender.com。留默认值则 HTTP 节点会失败，工作流前半段（LLM 拆解+校验）仍可运行。
+  - description: 云端演示默认值：httpbin 回显服务（POST 返回 200），用于验证整条链路连通。接真实出图服务时把它换成你的公网地址即可，例如 https://xxxx.ngrok-free.app；正式作业方案仍为纯本地链路。
     id: env-api-base-0001
     name: API_BASE
     selector:
     - env
     - API_BASE
-    value: https://REPLACE-WITH-YOUR-SERVER-URL
+    value: https://httpbin.org/anything
     value_type: string
   features:
     file_upload:
