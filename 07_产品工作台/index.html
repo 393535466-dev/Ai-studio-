@@ -641,9 +641,19 @@ function renderResult(scene, mode, raw){
         '<div class="meta">' + tags.map(t => '<span>' + esc(t) + '</span>').join("") + '</div></div></div>';
     }).join("");
   }
+  /* 空关键帧区：按当前运行通道给出准确原因，避免「启动了后端却仍不出图」的误解 */
+  const NO_PIXEL_HINT = {
+    demo:"演示模式只在浏览器里跑完 5 节点编排（镜头拆解 / prompt / 队列收据），零外部请求、不产出像素。要看到真图：先把左侧模式切到「本地编排服务」，再启动带 <code>--engine cloud</code>（DEV ONLY）或 <code>--engine local</code> 的后端。",
+    local:"编排已通过，但本地服务当前是 <code>--engine mock</code>（端侧降级）：按设计不加载权重、不出像素。重启后端时加 <code>--engine cloud</code>（DEV ONLY，零 key 联网）或 <code>--engine local</code>（需本机 ComfyUI + 权重），再重跑。",
+    dify:"Dify 云端工作流跑的是「开始 → LLM 拆解 → 代码校验 → HTTP 回显 → 结束」，DSL 里没有出图节点，因此只回结构化分镜、不产出像素。真出图请走「本地编排服务」通道。"
+  };
+  let noPixel = NO_PIXEL_HINT[mode] || NO_PIXEL_HINT.demo;
+  const errRaw = r.gen && (r.gen.images_error || r.gen.imagesError);
+  const errs = jparse(errRaw, []);
+  if(Array.isArray(errs) && errs.length){ noPixel += "<br>本次出图失败原因：" + esc(String(errs[0])); }
   $("#keyframes").innerHTML = r.images.length
     ? r.images.map((im,i) => '<div class="kf"><img src="' + esc(im.url || im.fileUrl || im.src) + '" alt="关键帧 ' + (i+1) + '"><span>' + esc(im.file || ("Plate " + (i+1))) + '</span></div>').join("")
-    : '<span class="muted tiny">未产出像素：当前为编排层验证 / 端侧降级状态。启动本地服务并切到 <code>--engine cloud</code>（DEV ONLY）或 <code>--engine local</code> 才会真出图。</span>';
+    : '<span class="muted tiny">' + noPixel + "</span>";
   $("#rawJson").textContent = JSON.stringify(raw, null, 2);
   state.last[scene] = {raw:raw, mode:mode, at:Date.now()};
   save();
