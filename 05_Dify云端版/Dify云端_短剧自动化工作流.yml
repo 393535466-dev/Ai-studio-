@@ -1,10 +1,3 @@
-# =============================================================================
-# 端侧 AI Studio · 短剧自动化工作流（Dify 云端演示版 DSL，可直接导入 cloud.dify.ai）
-# 链路：开始 → LLM 拆解 → 代码节点校验 → HTTP 调编排服务 → 结束
-# 与本地版的差异：LLM 为云端模型、HTTP 地址走环境变量 API_BASE。
-# 用途说明：这是「Dify 搭建学习 / 效果演示」通道；作业正式方案仍是纯本地链路，
-# 两者红线口径见 文档6_Dify云端版导入指南.html。
-# =============================================================================
 app:
   description: 短剧分镜编排。输入剧本，本地 Qwen3-4B 拆成结构化分镜 JSON，代码节点强制端侧边界 （竖屏 9:16、单镜头 ≤5s、图先行），再提交本机关键帧生成 API。视频渲染须审片通过后另行触发。
   icon: 🎬
@@ -17,8 +10,7 @@ version: 0.1.5
 workflow:
   conversation_variables: []
   environment_variables:
-  - description: 你的出图编排服务公网地址（拿到后改这里，HTTP 节点不用动）。示例：https://xxxx.ngrok-free.app 或 https://xxxx.onrender.com。留默认值则
-      HTTP 节点会失败，工作流前半段（LLM 拆解+校验）仍可运行。
+  - description: 你的出图编排服务公网地址（拿到后改这里，HTTP 节点不用动）。示例：https://xxxx.ngrok-free.app 或 https://xxxx.onrender.com。留默认值则 HTTP 节点会失败，工作流前半段（LLM 拆解+校验）仍可运行。
     id: env-api-base-0001
     name: API_BASE
     selector:
@@ -108,30 +100,23 @@ workflow:
           variable: script
         - label: 分镜数量上限
           options:
-          - label: '4'
-            value: '4'
-          - label: '6'
-            value: '6'
-          - label: '8'
-            value: '8'
+          - '4'
+          - '6'
+          - '8'
           required: true
           type: select
           variable: shot_count
         - label: 输出档位
           options:
-          - label: 480p 预演
-            value: 480p 预演
-          - label: 720p 终稿
-            value: 720p 终稿
+          - 480p 预演
+          - 720p 终稿
           required: true
           type: select
           variable: resolution
         - label: 角色锚定
           options:
-          - label: 每镜头 re-anchor（推荐）
-            value: 每镜头 re-anchor（推荐）
-          - label: 关闭（会产生身份漂移）
-            value: 关闭（会产生身份漂移）
+          - 每镜头 re-anchor（推荐）
+          - 关闭（会产生身份漂移）
           required: true
           type: select
           variable: anchor_lock
@@ -163,17 +148,13 @@ workflow:
         prompt_template:
         - id: sys-drama-0001
           role: system
-          text: "你是端侧 AI Studio 的短剧分镜编排器。把剧本拆成可直接出图的结构化分镜。\n必须只输出一个合法 JSON 对象，不要 Markdown 代码块、不要解释、不要多余文字。\n\
-            JSON 结构固定如下：\n{\n  \"plan_id\": \"字符串，形如 drama-<8位数字>\",\n  \"engine\": \"Z-Image-Turbo Q5_K_S\"\
-            ,\n  \"boundary\": \"竖屏 9:16 / 单镜头 ≤5s / 图先行 / I2V 5 帧段\",\n  \"characters\": [\"角色名\"],\n\
-            \  \"shots\": [\n    {\"scene\":\"景别，如 中景 / 近景 / 全景\",\n     \"action\":\"一到两句的动作与情绪描述\",\n\
-            \     \"dur\": 整数秒,\n     \"prompt\":\"英文关键帧提示词，必须含角色名与锚图引用\",\n     \"camera\":\"固定 / 缓推\
-            \ / 手持\",\n     \"identity_ref\":\"原始角色锚图\"}\n  ]\n}\n硬约束：每个镜头 dur 不得大于 5（端侧只能出 5 秒片段）；\n\
-            identity_ref 一律写「原始角色锚图」，禁止用上一镜头输出当参考（会身份漂移）；\n不生成长镜头、不生成 1080p、不生成需要云端视频模型的任务；\nshots 数量等于用户给的分镜数量上限。"
+          text: "你是端侧 AI Studio 的短剧分镜编排器。把剧本拆成可直接出图的结构化分镜。\n必须只输出一个合法 JSON 对象，不要 Markdown 代码块、不要解释、不要多余文字。\nJSON 结构固定如下：\n{\n  \"plan_id\": \"字符串，形如 drama-<8位数字>\",\n  \"engine\": \"Z-Image-Turbo Q5_K_S\"\
+            ,\n  \"boundary\": \"竖屏 9:16 / 单镜头 ≤5s / 图先行 / I2V 5 帧段\",\n  \"characters\": [\"角色名\"],\n  \"shots\": [\n    {\"scene\":\"景别，如 中景 / 近景 / 全景\",\n     \"action\":\"一到两句的动作与情绪描述\",\n     \"dur\"\
+            : 整数秒,\n     \"prompt\":\"英文关键帧提示词，必须含角色名与锚图引用\",\n     \"camera\":\"固定 / 缓推 / 手持\",\n     \"identity_ref\":\"原始角色锚图\"}\n  ]\n}\n硬约束：每个镜头 dur 不得大于 5（端侧只能出 5 秒片段）；\nidentity_ref 一律写「原始角色锚图」，禁止用上一镜头输出当参考（会身份漂移）；\n\
+            不生成长镜头、不生成 1080p、不生成需要云端视频模型的任务；\nshots 数量等于用户给的分镜数量上限。"
         - id: usr-drama-0001
           role: user
-          text: 剧本：{{#1770000002001.script#}} 分镜数量上限：{{#1770000002001.shot_count#}} 输出档位：{{#1770000002001.resolution#}}
-            角色锚定：{{#1770000002001.anchor_lock#}}
+          text: 剧本：{{#1770000002001.script#}} 分镜数量上限：{{#1770000002001.shot_count#}} 输出档位：{{#1770000002001.resolution#}} 角色锚定：{{#1770000002001.anchor_lock#}}
         selected: false
         title: LLM · 剧本拆为结构化分镜
         type: llm
@@ -194,30 +175,18 @@ workflow:
       type: custom
       width: 244
     - data:
-        code: "import json\nimport re\n\ndef main(llm_text, shot_count, resolution, anchor_lock):\n  \
-          \  raw = (llm_text or \"\").strip()\n    raw = re.sub(r\"^```(?:json)?\", \"\", raw).strip()\n\
-          \    raw = re.sub(r\"```$\", \"\", raw).strip()\n    try:\n        plan = json.loads(raw)\n\
-          \    except Exception:\n        # 本地规则兜底，绝不调用云端模型重试\n        n = int(shot_count or 6)\n    \
-          \    plan = {\n            \"plan_id\": \"drama-fallback\",\n            \"engine\": \"Z-Image-Turbo\
-          \ Q5_K_S\",\n            \"boundary\": \"竖屏 9:16 / 单镜头 ≤5s / 图先行\",\n            \"characters\"\
-          : [\"林夏\", \"陈屿\"],\n            \"shots\": [\n                {\"scene\": \"中景\", \"action\"\
-          : \"两人对视，情绪克制\", \"dur\": 4,\n                 \"prompt\": \"cinematic still, two characters,\
-          \ anchored reference\",\n                 \"camera\": \"固定\", \"identity_ref\": \"原始角色锚图\"}\n\
-          \                for _ in range(n)\n            ],\n        }\n    n = int(shot_count or len(plan.get(\"\
-          shots\", [])) or 6)\n    shots = plan.get(\"shots\", [])[:n]\n    for s in shots:\n        #\
-          \ 端侧边界在代码里强制落地，不信任模型自觉\n        s[\"dur\"] = min(int(s.get(\"dur\", 4) or 4), 5)\n        s[\"\
-          identity_ref\"] = \"原始角色锚图\"\n        s.setdefault(\"scene\", \"中景\")\n        s.setdefault(\"\
-          action\", \"情绪延续\")\n        s.setdefault(\"prompt\", \"cinematic still, anchored reference\"\
-          )\n        s.setdefault(\"camera\", \"固定\")\n        s[\"stage\"] = \"keyframe\"   # 图先行：本轮只排队关键帧，不启动视频\n\
-          \    plan[\"shots\"] = shots\n    plan[\"boundary\"] = \"竖屏 9:16 / 单镜头 ≤5s / 图先行 / I2V 5 帧段（无云端兜底）\"\
-          \n    drift = \"关闭\" in (anchor_lock or \"\")\n    request = {\n        \"plan_id\": plan.get(\"\
-          plan_id\", \"drama-local\"),\n        \"scene\": \"drama\",\n        \"engine\": \"Z-Image-Turbo\
-          \ Q5_K_S\",\n        \"resolution\": resolution,\n        \"anchor_lock\": not drift,\n    \
-          \    \"local_only\": True,\n        \"stage\": \"keyframe\",\n        \"tasks\": shots,\n  \
-          \  }\n    return {\n        \"plan_json\": json.dumps(plan, ensure_ascii=False),\n        \"\
-          request_json\": json.dumps(request, ensure_ascii=False),\n        \"shot_count\": len(shots),\n\
-          \        \"summary\": \"本地编排完成：%d 个镜头，均 ≤5s，图先行排队关键帧，re-anchor=%s\"\n                   % (len(shots),\
-          \ \"关\" if drift else \"开\"),\n    }"
+        code: "import json\nimport re\n\ndef main(llm_text, shot_count, resolution, anchor_lock):\n    raw = (llm_text or \"\").strip()\n    raw = re.sub(r\"^```(?:json)?\", \"\", raw).strip()\n    raw\
+          \ = re.sub(r\"```$\", \"\", raw).strip()\n    try:\n        plan = json.loads(raw)\n    except Exception:\n        # 本地规则兜底，绝不调用云端模型重试\n        n = int(shot_count or 6)\n        plan = {\n   \
+          \         \"plan_id\": \"drama-fallback\",\n            \"engine\": \"Z-Image-Turbo Q5_K_S\",\n            \"boundary\": \"竖屏 9:16 / 单镜头 ≤5s / 图先行\",\n            \"characters\": [\"林夏\", \"陈屿\"\
+          ],\n            \"shots\": [\n                {\"scene\": \"中景\", \"action\": \"两人对视，情绪克制\", \"dur\": 4,\n                 \"prompt\": \"cinematic still, two characters, anchored reference\",\n\
+          \                 \"camera\": \"固定\", \"identity_ref\": \"原始角色锚图\"}\n                for _ in range(n)\n            ],\n        }\n    n = int(shot_count or len(plan.get(\"shots\", [])) or 6)\n\
+          \    shots = plan.get(\"shots\", [])[:n]\n    for s in shots:\n        # 端侧边界在代码里强制落地，不信任模型自觉\n        s[\"dur\"] = min(int(s.get(\"dur\", 4) or 4), 5)\n        s[\"identity_ref\"] = \"原始角色锚图\"\
+          \n        s.setdefault(\"scene\", \"中景\")\n        s.setdefault(\"action\", \"情绪延续\")\n        s.setdefault(\"prompt\", \"cinematic still, anchored reference\")\n        s.setdefault(\"camera\"\
+          , \"固定\")\n        s[\"stage\"] = \"keyframe\"   # 图先行：本轮只排队关键帧，不启动视频\n    plan[\"shots\"] = shots\n    plan[\"boundary\"] = \"竖屏 9:16 / 单镜头 ≤5s / 图先行 / I2V 5 帧段（无云端兜底）\"\n    drift = \"关闭\" in\
+          \ (anchor_lock or \"\")\n    request = {\n        \"plan_id\": plan.get(\"plan_id\", \"drama-local\"),\n        \"scene\": \"drama\",\n        \"engine\": \"Z-Image-Turbo Q5_K_S\",\n        \"\
+          resolution\": resolution,\n        \"anchor_lock\": not drift,\n        \"local_only\": True,\n        \"stage\": \"keyframe\",\n        \"tasks\": shots,\n    }\n    return {\n        \"plan_json\"\
+          : json.dumps(plan, ensure_ascii=False),\n        \"request_json\": json.dumps(request, ensure_ascii=False),\n        \"shot_count\": len(shots),\n        \"summary\": \"本地编排完成：%d 个镜头，均 ≤5s，图先行排队关键帧，re-anchor=%s\"\
+          \n                   % (len(shots), \"关\" if drift else \"开\"),\n    }"
         code_language: python3
         desc: 结构化输出的护栏 + 端侧边界的强制执行点。模型可能被剧本带偏写出长镜头， 所以时长裁剪、身份锚定、图先行策略都在这里硬性落地。
         outputs:
@@ -277,8 +246,7 @@ workflow:
             type: text
             value: '{{#1770000002003.request_json#}}'
           type: json
-        desc: 云端版目标地址抽成了环境变量 API_BASE（工作流右上角「环境变量」里改）。云端 Dify 访问不到 127.0.0.1，需要把本机 local_api_server.py
-          通过内网穿透（ngrok 等）或部署到公网后再填。
+        desc: 云端版目标地址抽成了环境变量 API_BASE（工作流右上角「环境变量」里改）。云端 Dify 访问不到 127.0.0.1，需要把本机 local_api_server.py 通过内网穿透（ngrok 等）或部署到公网后再填。
         headers: 'Content-Type: application/json'
         method: post
         params: ''
