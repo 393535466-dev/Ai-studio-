@@ -1,0 +1,369 @@
+# =============================================================================
+# 端侧 AI Studio · 电商素材工作流（Dify 云端演示版 DSL，可直接导入 cloud.dify.ai）
+# 链路：开始 → LLM 拆解 → 代码节点校验 → HTTP 调编排服务 → 结束
+# 与本地版的差异：LLM 为云端模型、HTTP 地址走环境变量 API_BASE。
+# 用途说明：这是「Dify 搭建学习 / 效果演示」通道；作业正式方案仍是纯本地链路，
+# 两者红线口径见 文档6_Dify云端版导入指南.html。
+# =============================================================================
+app:
+  description: 电商素材批量出图编排。输入商品与尺寸风格，本地 Qwen3-4B 拆解为结构化任务清单， 校验后提交给本机 ComfyUI 出图 API。多 SKU 一致性靠锚图锁定，不做云端兜底。
+  icon: 🖼
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: 端侧AIStudio_电商素材工作流_云端演示版
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.1.5
+workflow:
+  conversation_variables: []
+  environment_variables:
+  - description: 你的出图编排服务公网地址（拿到后改这里，HTTP 节点不用动）。示例：https://xxxx.ngrok-free.app 或 https://xxxx.onrender.com。留默认值则
+      HTTP 节点会失败，工作流前半段（LLM 拆解+校验）仍可运行。
+    id: env-api-base-0001
+    name: API_BASE
+    selector:
+    - env
+    - API_BASE
+    value: https://REPLACE-WITH-YOUR-SERVER-URL
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        sourceType: start
+        targetType: llm
+      id: 1770000001001-source-1770000001002-target
+      source: '1770000001001'
+      sourceHandle: source
+      target: '1770000001002'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: llm
+        targetType: code
+      id: 1770000001002-source-1770000001003-target
+      source: '1770000001002'
+      sourceHandle: source
+      target: '1770000001003'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: http-request
+      id: 1770000001003-source-1770000001004-target
+      source: '1770000001003'
+      sourceHandle: source
+      target: '1770000001004'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        sourceType: http-request
+        targetType: end
+      id: 1770000001004-source-1770000001005-target
+      source: '1770000001004'
+      sourceHandle: source
+      target: '1770000001005'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 创作者在画布上填的批量参数。输入即 API 的 inputs 字段。
+        selected: false
+        title: 开始 · 批量参数
+        type: start
+        variables:
+        - label: 商品名称
+          max_length: 120
+          options: []
+          required: true
+          type: text-input
+          variable: product_name
+        - label: 场景 / 风格模板
+          options:
+          - label: 极简白棚
+            value: 极简白棚
+          - label: 暖调生活场景
+            value: 暖调生活场景
+          - label: 户外自然光
+            value: 户外自然光
+          - label: 节日促销
+            value: 节日促销
+          required: true
+          type: select
+          variable: style
+        - label: 输出尺寸
+          options:
+          - label: 1:1 主图
+            value: 1:1 主图
+          - label: 3:4 详情图
+            value: 3:4 详情图
+          - label: 9:16 封面
+            value: 9:16 封面
+          required: true
+          type: select
+          variable: size
+        - label: SKU 数量
+          options:
+          - label: '1'
+            value: '1'
+          - label: '3'
+            value: '3'
+          - label: '6'
+            value: '6'
+          required: true
+          type: select
+          variable: sku_count
+        - label: 每 SKU 候选数
+          options:
+          - label: '2'
+            value: '2'
+          - label: '4'
+            value: '4'
+          - label: '6'
+            value: '6'
+          required: true
+          type: select
+          variable: candidates
+        - label: 补充说明（可选）
+          max_length: 500
+          options: []
+          required: false
+          type: paragraph
+          variable: brief
+      height: 220
+      id: '1770000001001'
+      position:
+        x: 60
+        y: 260
+      positionAbsolute:
+        x: 60
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 云端演示版：导入后请打开本节点，在模型下拉里换成你账号里可用的模型（GPT / DeepSeek / 通义等均可）。提示词与本地版完全一致。
+        model:
+          completion_params:
+            max_tokens: 1400
+            temperature: 0.2
+          mode: chat
+          name: gpt-4o-mini
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: sys-ecom-0001
+          role: system
+          text: "你是端侧 AI Studio 的电商素材编排器，只负责把创作者的需求拆成可执行的批量出图任务，不负责画图。\n必须只输出一个合法 JSON 对象，不要 Markdown\
+            \ 代码块、不要解释、不要多余文字。\nJSON 结构固定如下：\n{\n  \"plan_id\": \"字符串，形如 ecom-<8位数字>\",\n  \"engine\"\
+            : \"Z-Image-Turbo Q5_K_S\",\n  \"anchor_lock\": true,\n  \"quality_gate\": \"字符串，写清主体保真与中文文字的验收口径\"\
+            ,\n  \"fallback\": \"字符串，写清 OOM 时的降级顺序\",\n  \"tasks\": [\n    {\"sku\":\"字符串\",\"style\"\
+            :\"字符串\",\"size\":\"字符串\",\"candidates\":整数,\n     \"prompt\":\"英文提示词，必须含主体描述与锚图引用\",\"negative\"\
+            :\"英文负向提示词\",\n     \"seed\":整数}\n  ]\n}\n硬约束：tasks 的数量等于用户给的 SKU 数量；每个任务的 candidates 等于用户给的候选数；\n\
+            anchor_lock 恒为 true（多 SKU 一致性靠回到原始商品锚图）；engine 只能是本地已装载的模型；\nfallback 只能包含降分辨率、减候选、排队、取消，绝对不能出现云端\
+            \ API 或联网兜底。"
+        - id: usr-ecom-0001
+          role: user
+          text: 商品名称：{{#1770000001001.product_name#}} 风格模板：{{#1770000001001.style#}} 输出尺寸：{{#1770000001001.size#}}
+            SKU 数量：{{#1770000001001.sku_count#}} 每 SKU 候选数：{{#1770000001001.candidates#}} 补充说明：{{#1770000001001.brief#}}
+        selected: false
+        title: LLM · 需求拆解为结构化任务
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: '1770000001002'
+      position:
+        x: 360
+        y: 260
+      positionAbsolute:
+        x: 360
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "import json\nimport re\n\ndef main(llm_text, sku_count, candidates, product_name):\n  \
+          \  raw = (llm_text or \"\").strip()\n    raw = re.sub(r\"^```(?:json)?\", \"\", raw).strip()\n\
+          \    raw = re.sub(r\"```$\", \"\", raw).strip()\n    try:\n        plan = json.loads(raw)\n\
+          \    except Exception:\n        # 小模型偶发输出不合规 JSON：本地规则兜底，绝不转云端重试\n        n = int(sku_count\
+          \ or 1)\n        c = int(candidates or 4)\n        plan = {\n            \"plan_id\": \"ecom-fallback\"\
+          ,\n            \"engine\": \"Z-Image-Turbo Q5_K_S\",\n            \"anchor_lock\": True,\n \
+          \           \"quality_gate\": \"主体形状 / LOGO / 配色与锚图一致\",\n            \"fallback\": \"1024→768\
+          \ → 候选数减半 → 排队 → 取消\",\n            \"tasks\": [\n                {\"sku\": \"SKU-%02d\" % (i\
+          \ + 1), \"style\": \"极简白棚\",\n                 \"size\": \"1:1 主图\", \"candidates\": c,\n  \
+          \               \"prompt\": \"product photo of %s, anchored reference, clean studio\" % product_name,\n\
+          \                 \"negative\": \"deformed, watermark, extra text\", \"seed\": 1000 + i * 37}\n\
+          \                for i in range(n)\n            ],\n        }\n    tasks = plan.get(\"tasks\"\
+          , [])\n    n = int(sku_count or len(tasks) or 1)\n    c = int(candidates or 4)\n    tasks =\
+          \ tasks[:n]\n    for i, t in enumerate(tasks):\n        t[\"candidates\"] = c\n        t.setdefault(\"\
+          sku\", \"SKU-%02d\" % (i + 1))\n        t.setdefault(\"prompt\", \"product photo, anchored reference\"\
+          )\n        t.setdefault(\"negative\", \"deformed, watermark\")\n        t.setdefault(\"seed\"\
+          , 1000 + i * 37)\n        t[\"anchor_lock\"] = True\n    plan[\"tasks\"] = tasks\n    plan[\"\
+          anchor_lock\"] = True\n    plan[\"fallback\"] = \"1024→768 → 候选数减半 → 排队 → 取消（无云端兜底）\"\n    request\
+          \ = {\n        \"plan_id\": plan.get(\"plan_id\", \"ecom-local\"),\n        \"scene\": \"ecom\"\
+          ,\n        \"engine\": plan.get(\"engine\", \"Z-Image-Turbo Q5_K_S\"),\n        \"anchor_lock\"\
+          : True,\n        \"local_only\": True,\n        \"tasks\": tasks,\n    }\n    return {\n   \
+          \     \"plan_json\": json.dumps(plan, ensure_ascii=False),\n        \"request_json\": json.dumps(request,\
+          \ ensure_ascii=False),\n        \"task_count\": len(tasks),\n        \"summary\": \"本地编排完成：%d\
+          \ 个 SKU × %d 候选，锚图锁定，单卡串行排队\" % (len(tasks), c),\n    }"
+        code_language: python3
+        desc: 结构化输出的关键护栏。端侧小模型不保证 100% 吐出合规 JSON，所以在这里做 去围栏、解析、字段补齐、数量裁剪与「无云端」约束复核。
+        outputs:
+          plan_json:
+            children: null
+            type: string
+          request_json:
+            children: null
+            type: string
+          summary:
+            children: null
+            type: string
+          task_count:
+            children: null
+            type: number
+        selected: false
+        title: 代码 · 结构化校验与任务展开
+        type: code
+        variables:
+        - value_selector:
+          - '1770000001002'
+          - text
+          variable: llm_text
+        - value_selector:
+          - '1770000001001'
+          - sku_count
+          variable: sku_count
+        - value_selector:
+          - '1770000001001'
+          - candidates
+          variable: candidates
+        - value_selector:
+          - '1770000001001'
+          - product_name
+          variable: product_name
+      height: 54
+      id: '1770000001003'
+      position:
+        x: 660
+        y: 260
+      positionAbsolute:
+        x: 660
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: kv-ecom-body
+            key: ''
+            type: text
+            value: '{{#1770000001003.request_json#}}'
+          type: json
+        desc: 云端版目标地址抽成了环境变量 API_BASE（工作流右上角「环境变量」里改）。云端 Dify 访问不到 127.0.0.1，需要把本机 local_api_server.py
+          通过内网穿透（ngrok 等）或部署到公网后再填。
+        headers: 'Content-Type: application/json'
+        method: post
+        params: ''
+        selected: false
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 120
+          max_write_timeout: 10
+        title: HTTP · 提交本地出图任务
+        type: http-request
+        url: '{{#env.API_BASE#}}/api/ecom/generate'
+        variables: []
+      height: 110
+      id: '1770000001004'
+      position:
+        x: 960
+        y: 260
+      positionAbsolute:
+        x: 960
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 工作流发布为 API 后，data.outputs 就是创作应用画布收到的回包。
+        outputs:
+        - value_selector:
+          - '1770000001003'
+          - plan_json
+          variable: plan
+        - value_selector:
+          - '1770000001004'
+          - body
+          variable: generate_result
+        - value_selector:
+          - '1770000001003'
+          - summary
+          variable: summary
+        - value_selector:
+          - '1770000001003'
+          - task_count
+          variable: task_count
+        selected: false
+        title: 结束 · 回传画布
+        type: end
+      height: 90
+      id: '1770000001005'
+      position:
+        x: 1260
+        y: 260
+      positionAbsolute:
+        x: 1260
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 40
+      y: 60
+      zoom: 0.75

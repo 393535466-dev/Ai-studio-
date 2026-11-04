@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>文档6 · Dify 云端版导入与搭建指南</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f8fafc;color:#0f172a;line-height:1.75}
+  .wrap{max-width:980px;margin:0 auto;padding:34px 22px 60px}
+  h1{font-size:26px;margin:0 0 6px}
+  h2{font-size:19px;margin:38px 0 12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0}
+  h3{font-size:15.5px;margin:22px 0 8px}
+  .meta{color:#64748b;font-size:13px;margin-bottom:4px}
+  .tag{display:inline-block;background:#eef2ff;color:#4338ca;border-radius:999px;padding:2px 11px;font-size:12px;margin:2px 6px 2px 0}
+  .nav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 8px}
+  .nav a{text-decoration:none;color:#1d4ed8;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:5px 12px;font-size:13px}
+  .nav a:hover{background:#eff6ff}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px 22px;margin:14px 0;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff;margin:12px 0}
+  th,td{border:1px solid #e2e8f0;padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#f1f5f9}
+  code{background:#f1f5f9;border-radius:5px;padding:1px 6px;font-size:12.5px;font-family:ui-monospace,Menlo,monospace;color:#0f172a}
+  pre{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 15px;overflow-x:auto;font-size:12.5px;line-height:1.6}
+  pre code{background:none;padding:0}
+  .note{border-radius:12px;padding:13px 17px;margin:14px 0;font-size:13.5px;border:1px solid}
+  .ok{background:#f0fdf4;border-color:#bbf7d0;color:#14532d}
+  .warn{background:#fffbeb;border-color:#fde68a;color:#78350f}
+  .stop{background:#fef2f2;border-color:#fecaca;color:#7f1d1d}
+  .blue{background:#eff6ff;border-color:#bfdbfe;color:#1e3a8a}
+  .say{background:#ecfdf5;border-left:4px solid #10b981;padding:11px 16px;border-radius:0 10px 10px 0;margin:10px 0;font-size:14px}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:10px 0}
+  .steps li{counter-increment:s;position:relative;padding:8px 0 8px 46px;border-bottom:1px dashed #e2e8f0}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:30px;height:30px;border-radius:50%;background:#1d4ed8;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .kbd{background:#fff;border:1px solid #cbd5e1;border-bottom-width:2.5px;border-radius:6px;padding:1px 7px;font-size:12.5px;font-family:inherit}
+  .foot{margin-top:40px;color:#94a3b8;font-size:12px;text-align:center}
+</style>
+</head>
+<body><div class="wrap">
+<h1>文档6 · Dify 云端版导入与搭建指南</h1>
+<div class="meta">端侧 AI Studio · 交付包 05_Dify云端版 · 配合 cloud.dify.ai 使用 · 2026-11-04</div>
+<span class="tag">Dify 云端版</span><span class="tag">DSL 可直接导入</span><span class="tag">小白可照做</span><span class="tag">学习/演示通道（非作业正文）</span>
+<div class="nav">
+  <a href="#s0">00 30秒版</a><a href="#s1">01 你的链接怎么用</a><a href="#s2">02 导入步骤</a>
+  <a href="#s3">03 模型怎么选</a><a href="#s4">04 服务地址怎么填</a><a href="#s5">05 发布并拿 API Key</a>
+  <a href="#s6">06 红线口径</a><a href="#s7">07 常见坑</a>
+</div>
+
+<div class="note blue"><strong>这份指南解决什么：</strong>你的 Dify 是<strong>云端版</strong>（cloud.dify.ai），和作业里假设的「自部署在本机」不是一回事。云端版有两件事做不到：①它的 HTTP 节点访问不到你 Mac 上的 127.0.0.1；②它没有本地模型可选。所以云端版做的是<strong>「同样的编排逻辑，用云端模型跑通给你看」</strong>——学 Dify 搭建、看结构化输出效果，都用它。</div>
+
+<h2 id="s0">00 · 30 秒版</h2>
+<div class="card">
+<ol class="steps">
+  <li>在 Dify 里<strong>导入</strong> <code>05_Dify云端版/Dify云端_电商素材工作流.yml</code>（导入方法见 02 节）。</li>
+  <li>打开 LLM 节点，把模型换成<strong>你账号里可用的任意一个</strong>（03 节，10 秒）。</li>
+  <li>点右上角<strong>运行</strong>试跑 → 能出 <code>plan_json</code> 就算搭建成功。之后要接出图服务再看 04 节，要发 API Key 给助手再看 05 节。</li>
+</ol>
+</div>
+
+<h2 id="s1">01 · 你给的链接怎么用</h2>
+<div class="card">
+<p>你给的 <code>cloud.dify.ai/app/16dbd924-.../workflow</code> 是一个<strong>已创建好的空白工作流应用</strong>。DSL 导入有两种走法：</p>
+<table>
+  <tr><th>走法</th><th>怎么操作</th><th>适合谁</th></tr>
+  <tr><td><strong>A. 导入 DSL（推荐）</strong></td><td>回到 Dify 工作室首页 →「创建应用」→「导入 DSL 文件」→ 上传本目录的 yml → 会生成一个<strong>新应用</strong>（你原来的空白应用可以删掉）</td><td>所有人。5 个节点 4 条连线一次到位</td></tr>
+  <tr><td>B. 在现有应用里手动搭</td><td>打开你链接里的应用，照 02 节的节点表自己拖：开始 → LLM → 代码 → HTTP → 结束</td><td>想练手 Dify 的人，约 15 分钟</td></tr>
+</table>
+<div class="note warn">注意：Dify 的「导入 DSL」一般会<strong>新建应用</strong>，不是覆盖你打开的那个。导入成功后，从工作室首页点进<strong>新出现的那张卡片</strong>就是。</div>
+</div>
+
+<h2 id="s2">02 · 导入步骤（逐张点）</h2>
+<div class="card">
+<ol class="steps">
+  <li>下载/找到文件：<code>05_Dify云端版/Dify云端_电商素材工作流.yml</code>（电商版）和 <code>Dify云端_短剧自动化工作流.yml</code>（短剧版），两个可都导。</li>
+  <li>浏览器打开 <code>cloud.dify.ai</code>，左侧点<strong>「工作室」</strong>。</li>
+  <li>点左上角<strong>「创建空白应用」</strong>按钮旁的箭头 → 选<strong>「导入 DSL 文件」</strong>（部分版本在「创建应用」弹窗里）。</li>
+  <li>上传 yml 文件 → 点<strong>「创建文件」</strong>。如果提示版本不兼容，选「<strong>仍要导入</strong>」即可。</li>
+  <li>导入后进画布，应看到 5 个节点：<strong>开始 → LLM 拆解 → 代码校验 → HTTP 提交 → 结束</strong>。LLM 节点上可能有红色感叹号——正常，去 03 节选模型就消了。</li>
+  <li>点右上角<strong>「运行」</strong>，在右侧填几个参数（商品名称随便写，如「保温杯」），看运行结果里的 <code>plan</code> 输出。</li>
+</ol>
+<p>导入后的节点与作用（和本地版完全同构）：</p>
+<table>
+  <tr><th>节点</th><th>做什么</th><th>云端版要注意什么</th></tr>
+  <tr><td>开始 · 批量参数</td><td>商品名、风格、尺寸、SKU 数、候选数</td><td>不用改</td></tr>
+  <tr><td>LLM · 需求拆解</td><td>把需求拆成结构化 JSON 任务清单</td><td><strong>必须换成你的模型</strong>（见 03）</td></tr>
+  <tr><td>代码 · 校验与展开</td><td>去围栏、解析 JSON、补字段、数量校验</td><td>不用改（Dify 云端代码沙箱支持 python3）</td></tr>
+  <tr><td>HTTP · 提交出图</td><td>调 <code>{{#env.API_BASE#}}/api/ecom/generate</code></td><td>地址走环境变量（见 04）</td></tr>
+  <tr><td>结束 · 回传画布</td><td>输出 plan / generate_result / summary</td><td>不用改</td></tr>
+</table>
+</div>
+
+<h2 id="s3">03 · 模型怎么选（10 秒的事）</h2>
+<div class="card">
+<ol class="steps">
+  <li>画布上点开 <strong>LLM 节点</strong>。</li>
+  <li>右侧面板顶部<strong>「模型」下拉</strong>，选一个你账号里有额度的：DeepSeek / 通义千问 / GPT-4o-mini / GLM 等都可以。提示词已写死，<strong>换任何模型都不用改提示词</strong>。</li>
+  <li>温度已设 0.2、max_tokens 1400，不用动。</li>
+</ol>
+<div class="note ok">为什么哪个模型都行：这套工作流的可靠性不押在模型上——提示词约束 + 代码节点兜底校验双保险，这正是作业里「结构化输出」设计点的演示。小模型吐错 JSON，代码节点会本地兜底重建任务清单，绝不重试、不转云端。</div>
+</div>
+
+<h2 id="s4">04 · 服务地址怎么填（API_BASE）</h2>
+<div class="card">
+<p>云端 Dify 够不到你 Mac 上的 <code>127.0.0.1:8765</code>（那是「你自己家」的地址，云端在别人家）。要让 HTTP 节点真正调到出图编排服务，三条路：</p>
+<table>
+  <tr><th>方案</th><th>做法</th><th>成本</th><th>推荐度</th></tr>
+  <tr><td><strong>① 先不接，只跑前半段</strong></td><td>什么都不填。运行到 HTTP 节点会失败，但 <code>plan_json</code> 已经出来——搭 Dify 的目的已达成</td><td>零</td><td>现在就能用</td></tr>
+  <tr><td>② ngrok 内网穿透</td><td>本机跑 <code>python3 local_api_server.py --host 0.0.0.0</code>，再开 ngrok 隧道，把 https 地址填进环境变量</td><td>免费版够用，但地址每次重启会变</td><td>想看全链路时用</td></tr>
+  <tr><td>③ 部署到公网小主机</td><td>把 <code>local_api_server.py + engine_drivers.py</code> 丢到 Render / Railway 等免费层</td><td>免费层会休眠，首次慢</td><td>长期演示用</td></tr>
+</table>
+<p>填法：工作流画布右上角点<strong>「环境变量」</strong>图标 → 编辑 <code>API_BASE</code> → 把默认值换成你的地址（不带末尾斜杠）。改这一处，HTTP 节点自动跟着变。</p>
+</div>
+
+<h2 id="s5">05 · 发布并拿 API Key（发给我那一步）</h2>
+<div class="card">
+<ol class="steps">
+  <li>画布右上角点<strong>「发布」</strong>（先运行成功一次再发布）。</li>
+  <li>左侧菜单<strong>「访问 API」</strong>（部分版本在「API 访问」）。</li>
+  <li>页面右上角<strong>「API 密钥」</strong>按钮 → <strong>「创建密钥」</strong> → 复制 <code>app-</code> 开头那串。</li>
+  <li>把它发给助手（就是你说的「API 后续补给你」），并注明是哪个应用的（电商 / 短剧）。</li>
+</ol>
+<div class="note ok">拿到密钥后，助手可以直接替你调 <code>POST https://api.dify.ai/v1/workflows/run</code> 实测你的工作流、修问题、把返回结构对接进 Demo。</div>
+</div>
+
+<h2 id="s6">06 · 红线口径：云端版 ≠ 作业方案</h2>
+<div class="card">
+<div class="note stop"><strong>作业的硬约束是「全部推理在本地，无云端兜底」。</strong>云端版 Dify 里跑的 LLM 是云端模型——所以它<strong>不能写进作业正文</strong>，只能作为「我在 Dify 上验证过编排逻辑」的佐证。</div>
+<p>三层的分工：</p>
+<table>
+  <tr><th>层</th><th>载体</th><th>在作业里的身份</th></tr>
+  <tr><td>正式方案（纯本地）</td><td>文档①–③ + 两个 Demo + <code>03_Dify工作流与API接入/</code> 的本地版 DSL</td><td>作业正文，唯一计分口径</td></tr>
+  <tr><td>云端学习/演示</td><td>本目录两个云端版 DSL + 你的 cloud.dify.ai 应用</td><td>「已用 Dify 搭通同构工作流」的佐证，讲稿里可以提一句</td></tr>
+  <tr><td>联网出图（DEV ONLY）</td><td><code>04_可落地运行/一键联网演示.command</code></td><td>开发演示通道，明确标注非云端兜底</td></tr>
+</table>
+</div>
+
+<h2 id="s7">07 · 常见坑</h2>
+<div class="card">
+<table>
+  <tr><th>现象</th><th>原因</th><th>解法</th></tr>
+  <tr><td>LLM 节点红感叹号</td><td>默认的模型供应商你没配</td><td>03 节：换模型</td></tr>
+  <tr><td>导入后节点是空的</td><td>Dify 版本差异导致部分字段没吃进去</td><td>删掉重导一次；再不行走 01 节 B 路线手动搭</td></tr>
+  <tr><td>HTTP 节点超时/报错</td><td>API_BASE 还是占位值，或服务没公网地址</td><td>04 节：先跑前半段，或配穿透/部署</td></tr>
+  <tr><td>plan 输出不是 JSON</td><td>模型没遵守格式</td><td>不用管——代码节点会兜底；这正是设计的一部分</td></tr>
+  <tr><td>GitHub 打不开 Demo</td><td>仓库还没推送 / 推送后要等 Pages 生效</td><td>见 index.html 的 GitHub 部署说明</td></tr>
+</table>
+</div>
+
+<div class="foot">端侧 AI Studio 交付包 · 05_Dify云端版 · 与 03_Dify工作流与API接入/文档4 互补：文档4 讲本地版与 API 契约，本文档讲云端版导入</div>
+</div></body>
+</html>
