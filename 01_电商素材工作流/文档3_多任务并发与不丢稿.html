@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>文档 ③ · 多任务并发与不丢稿｜电商素材工作流</title>
+<style>
+:root{--ink:#1f2937;--ink2:#4b5563;--ink3:#6b7280;--line:#e5e7eb;--bg:#f6f8fb;
+--blue:#1d4ed8;--blue-bg:#eff6ff;--blue-line:#bfdbfe;--teal:#0f766e;--teal-bg:#f0fdfa;
+--amber:#b45309;--amber-bg:#fffbeb;--red:#b91c1c;--red-bg:#fef2f2;--purple:#6d28d9;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+header.hero{background:#fff;border-bottom:1px solid var(--line);border-top:4px solid var(--blue);margin-bottom:28px}
+.hero-in{max-width:1080px;margin:0 auto;padding:30px 24px 26px}
+.kicker{display:inline-block;font-size:12px;letter-spacing:.08em;color:var(--blue);background:var(--blue-bg);
+border:1px solid var(--blue-line);border-radius:99px;padding:3px 12px;margin-bottom:14px}
+h1{font-size:27px;line-height:1.35;margin:0 0 8px;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--ink2);font-size:14px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.meta span{font-size:12px;color:var(--ink2);background:#f3f4f6;border-radius:6px;padding:4px 10px}
+nav.toc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:26px;
+display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:13px;color:var(--ink2);text-decoration:none;padding:5px 11px;border-radius:7px;background:#f9fafb;border:1px solid var(--line)}
+nav.toc a:hover{color:var(--blue);border-color:var(--blue-line);background:var(--blue-bg)}
+section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin-bottom:20px}
+h2{font-size:20px;margin:0 0 16px;font-weight:650;letter-spacing:-.01em;scroll-margin-top:20px}
+h2 .n{display:inline-block;font-size:12px;color:#fff;background:var(--blue);border-radius:6px;
+padding:2px 8px;margin-right:10px;vertical-align:3px;font-weight:500}
+h3{font-size:16px;margin:22px 0 10px;font-weight:650}
+h3:first-of-type{margin-top:4px}
+p{margin:10px 0}
+ul,ol{margin:10px 0;padding-left:22px}
+li{margin:6px 0}
+strong{font-weight:650}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:#f3f4f6;
+border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#9a3412}
+.tw{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:600px}
+th{background:#f8fafc;text-align:left;font-weight:650;color:var(--ink);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #f1f3f5;vertical-align:top;color:var(--ink2)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fafbfc}
+td:first-child{color:var(--ink);font-weight:550}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fcfdfe}
+.card .ct{font-weight:650;font-size:14px;margin-bottom:6px;color:var(--ink)}
+.card .cb{font-size:13px;color:var(--ink2);line-height:1.65}
+.note{border-left:3px solid var(--blue);background:var(--blue-bg);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:14px}
+.note.warm{border-color:var(--amber);background:var(--amber-bg)}
+.note.danger{border-color:var(--red);background:var(--red-bg)}
+.note.good{border-color:var(--teal);background:var(--teal-bg)}
+.note .nt{font-weight:650;margin-bottom:4px;display:block}
+.plain{background:var(--teal-bg);border:1px solid #99f6e4;border-radius:12px;padding:18px 22px;margin:0 0 20px}
+.plain .pt{font-weight:650;color:var(--teal);font-size:14px;margin-bottom:8px}
+.plain p{margin:6px 0;font-size:14.5px}
+.svgbox{overflow-x:auto;margin:18px 0;text-align:center}
+.svgbox svg{max-width:100%;height:auto}
+.tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:5px;margin-right:5px;font-weight:600}
+.tag.b{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-line)}
+.tag.t{background:var(--teal-bg);color:var(--teal);border:1px solid #99f6e4}
+.tag.a{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a}
+.tag.r{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;font-size:13px}
+.flow .step{background:#fff;border:1px solid var(--blue-line);border-radius:8px;padding:8px 12px;color:var(--blue);font-weight:550}
+.flow .arw{color:var(--ink3)}
+footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:28px 0 0;border-top:1px solid var(--line);margin-top:30px}
+.src{font-size:12.5px;color:var(--ink2);line-height:1.9}
+.src a{color:var(--blue);text-decoration:none;word-break:break-all}
+.src a:hover{text-decoration:underline}
+@media(max-width:640px){.wrap{padding:0 14px 50px}.hero-in{padding:22px 14px}section{padding:20px 16px}h1{font-size:22px}}
+@media print{body{background:#fff}nav.toc{display:none}section{break-inside:avoid;box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-in">
+<span class="kicker">套装 A / 文档 3 of 3 · 加分项</span>
+<h1>文档 ③ · 多任务并发与不丢稿｜电商素材工作流</h1>
+<p class="sub">多任务并发下的队列、中断、失败恢复与草稿持久化策略；对应 Part 2 加分项。</p>
+<div class="meta"><span>场景：电商素材工作流</span><span>加分项对应交付</span><span>对标 ComfyUI 真实 API</span><span>配套：Demo 底部队列面板</span></div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a href="#problem">01 冲突定义</a><a href="#state">02 状态机</a><a href="#queue">03 队列策略</a><a href="#interrupt">04 中断策略</a><a href="#recover">05 失败恢复</a><a href="#persist">06 三层持久化</a><a href="#edge">07 边界</a><a href="#ask">08 答辩准备</a><a href="#ref">09 参考依据</a></nav>
+<div class="plain"><div class="pt">一页速读</div><p>单机单卡最怕的不是「慢」，是<strong>「跑到一半崩了、稿子没了」</strong>。我的策略是四层：① 所有任务进同一个队列、单卡串行执行，前台编辑优先；② 每个任务有明确状态机，中断要能立刻释放显存；③ 失败按错误类型分别处理——显存不足就自动降配重试，模型缺失就暂停等人补文件，绝不盲目重跑；④ 草稿、参数、产物三层即时落盘，进程被强杀后重启能重建队列。<strong>不承诺无限并发，只承诺一张稿都不丢。</strong></p></div><section id="problem"><h2><span class="n">01</span>问题定义：端侧并发到底在冲突什么</h2><p>「多任务并发（同时生成多张、边生成边编辑）」在端侧不是软件问题，是资源问题。先把冲突列清楚，策略才有针对性。</p><div class="grid"><div class="card"><div class="ct">显存争抢</div><div class="cb">两个生成任务同时进来，激活内存叠加直接 OOM；本地没有第二张卡可以分担。</div></div><div class="card"><div class="ct">模型切换争抢</div><div class="cb">批量用 Turbo、中文主图用 Qwen-Image，两个 20GB 级模型同驻会撑爆内存，切换还要几十秒。</div></div><div class="card"><div class="ct">前台 / 后台争抢</div><div class="cb">用户正在画布上涂抹重绘，后台 18 张批量还在跑 → 用户操作卡顿，体感是「软件卡死」。</div></div><div class="card"><div class="ct">失败放大</div><div class="cb">云端失败可以换机器重试，端侧一次 OOM 可能让整批任务一起失败，且草稿没存就全没了。</div></div></div><div class="note danger"><span class="nt">产品原则（先立规矩）</span>① <strong>不做 GPU 硬并发</strong>：单卡一次只跑一个生成任务，并发体现在「排队 + 可编辑 + 可插入」而不是同时占显存；② <strong>前台优先</strong>；③ <strong>任何写操作即时落盘</strong>；④ <strong>绝不静默失败</strong>，每个异常都要给用户可见的状态与下一步。</div></section><section id="state"><h2><span class="n">02</span>任务状态机：所有并发行为的共同语言</h2><div class="svgbox"><svg viewBox="0 0 680 250" width="100%" role="img" xmlns="http://www.w3.org/2000/svg"><title>任务状态机</title><desc>草稿经入队、运行，可成功、失败、被中断，失败任务可降级重试，中断任务可恢复续跑。</desc><rect x="30" y="30" width="110" height="46" rx="9" fill="#f1f5f9" stroke="#cbd5e1"/><text x="85" y="58" text-anchor="middle" font-size="13" fill="#334155" font-family="system-ui">draft 草稿</text><rect x="175" y="30" width="110" height="46" rx="9" fill="#eff6ff" stroke="#93c5fd"/><text x="230" y="58" text-anchor="middle" font-size="13" fill="#1e40af" font-family="system-ui">queued 排队</text><rect x="320" y="30" width="110" height="46" rx="9" fill="#fffbeb" stroke="#fcd34d"/><text x="375" y="58" text-anchor="middle" font-size="13" fill="#92400e" font-family="system-ui">running 运行</text><rect x="500" y="20" width="140" height="42" rx="9" fill="#f0fdfa" stroke="#5eead4"/><text x="570" y="46" text-anchor="middle" font-size="13" fill="#115e59" font-family="system-ui">succeeded 完成</text><rect x="500" y="72" width="140" height="42" rx="9" fill="#fef2f2" stroke="#fca5a5"/><text x="570" y="98" text-anchor="middle" font-size="13" fill="#991b1b" font-family="system-ui">failed 失败</text><rect x="320" y="140" width="110" height="46" rx="9" fill="#f5f3ff" stroke="#c4b5fd"/><text x="375" y="168" text-anchor="middle" font-size="13" fill="#5b21b6" font-family="system-ui">interrupted 中断</text><rect x="175" y="140" width="110" height="46" rx="9" fill="#f0fdfa" stroke="#5eead4"/><text x="230" y="168" text-anchor="middle" font-size="13" fill="#115e59" font-family="system-ui">resumable 可恢复</text><path d="M140 53 L171 53 M285 53 L316 53 M430 53 L496 41 M430 60 L496 90 M375 76 L375 136" fill="none" stroke="#94a3b8" stroke-width="1.5"/><path d="M320 163 L289 163 M175 163 L150 163 L150 76 L171 62" fill="none" stroke="#0f766e" stroke-width="1.5"/><path d="M500 93 L460 93 L460 163 L434 163" fill="none" stroke="#dc2626" stroke-width="1.5"/><text x="30" y="222" font-size="12" fill="#475569" font-family="system-ui">红线：失败 → 分类 → 降级重试；绿线：中断 / 崩溃 → 从 checkpoint 恢复；两者都回到 queued，但重试参数会变。</text></svg></div><p>状态机不是画着好看：它决定了「什么能取消、什么能恢复、什么必须重来」，也决定了界面上每个按钮该不该亮。</p></section><section id="queue"><h2><span class="n">03</span>队列策略：单卡串行 + 优先级 + 模型亲和性</h2><div class="tw"><table><thead><tr><th>机制</th><th>设计</th><th>解决的冲突</th></tr></thead><tbody><tr><td>单执行槽</td><td>GPU 一次只跑 1 个生成任务，其余排队；用户看到的是「同时提交多张」而非「同时占用显存」</td><td>显存争抢 / OOM</td></tr><tr><td>优先级</td><td>P0 前台编辑（局部重绘、改词重出）＞ P1 单张预览 ＞ P2 后台批量 ＞ P3 预生成缓存</td><td>前台 / 后台争抢</td></tr><tr><td>可抢占点</td><td>在采样步之间、任务边界处允许插入 P0；不在单张采样中途抢占</td><td>既保证响应，又避免半成品</td></tr><tr><td>模型亲和性分组</td><td>把使用同一模型的任务成批连跑，减少卸载/加载；切换精修模型前先排空 Turbo 队列</td><td>模型切换开销</td></tr><tr><td>配额与公平</td><td>单用户后台批量最多占 80% 时间片；批量任务每 N 张让出一次给 P0</td><td>避免一个批量把整机锁死</td></tr><tr><td>重复提交拦截</td><td>相同锚图 + 参数 + seed 的任务在 5 秒内重复提交直接复用结果</td><td>用户焦虑性连点造成队列雪崩</td></tr><tr><td>算力可见</td><td>队列页常驻显示显存、执行槽、排队数、降级级别</td><td>端侧特有的透明度</td></tr></tbody></table></div><div class="note good"><span class="nt">为什么「边生成边编辑」依然成立</span>用户不需要 GPU 真的并行：编辑操作（挑图、涂抹、改词、排版）本身不吃显存，只生成「增量任务」插到队首。体感是边跑边改，物理上仍是单卡串行——这是端侧产品最重要的一个体验设计。</div></section><section id="interrupt"><h2><span class="n">04</span>中断策略：区分「取消排队」和「打断正在跑的」</h2><div class="tw"><table><thead><tr><th>用户动作</th><th>系统动作</th><th>对应本地接口</th><th>结果</th></tr></thead><tbody><tr><td>取消某个排队任务</td><td>从待执行列表移除，不改 GPU 状态</td><td><code>POST /queue</code> <code>{"delete":[prompt_id]}</code></td><td>任务 → cancelled，草稿保留</td></tr><tr><td>停止当前生成</td><td>中断正在执行的采样，立即释放显存</td><td><code>POST /interrupt</code></td><td>任务 → interrupted，参数与已完成产物保留</td></tr><tr><td>清空后台批量</td><td>只清 queued，不动 running；需二次确认</td><td><code>DELETE /queue</code></td><td>批量清空，画布草稿不受影响</td></tr><tr><td>切到精修模式</td><td>先中断 / 排空 Turbo 队列 → 卸载 → 加载 Qwen-Image</td><td>队列编排 + 模型管理</td><td>界面显示切换耗时，不静默</td></tr><tr><td>用户关闭应用</td><td>运行任务标记 interrupted 并写 checkpoint，下次启动询问是否续跑</td><td>本地状态持久化</td><td>不丢稿</td></tr></tbody></table></div><div class="note warm"><span class="nt">细节分</span>中断后<strong>已生成的部分候选图仍然保留</strong>：4 张候选跑到第 3 张被中断，前 2 张照样能看、能挑、能导出。很多原型只做「全部作废」，那就不叫不丢稿。</div></section><section id="recover"><h2><span class="n">05</span>失败恢复：按错误类型分类，而不是无脑重试</h2><p>盲目重试在端侧很危险：OOM 的任务原样重跑只会再 OOM 一次。必须先看异常类型（本地推理服务会通过执行事件给出分类），再决定动作。</p><div class="tw"><table><thead><tr><th>异常类型</th><th>含义</th><th>恢复动作</th><th>是否自动</th></tr></thead><tbody><tr><td><code>OOMError</code></td><td>显存不足</td><td>降分辨率 → 减候选数 → 分块 VAE，参数改写后重新入队；连续 2 次失败转人工</td><td>自动，最多 2 次</td></tr><tr><td><code>ValidationError</code></td><td>工作流 / 参数非法</td><td>不重试，定位到具体节点，提示用户修正模板</td><td>否，需人工</td></tr><tr><td><code>ModelDownloadError</code></td><td>模型文件缺失或损坏</td><td>暂停同模型的所有任务，提示补齐本地权重；<strong>绝不尝试联网下载</strong></td><td>否，需人工</td></tr><tr><td><code>ImageDownloadError</code></td><td>输入图读取失败</td><td>回退到资产库里的锚图副本重试一次</td><td>自动，1 次</td></tr><tr><td>磁盘将满 / 写入失败</td><td>本地存储问题</td><td>暂停队列、清理临时帧缓存、提示用户</td><td>半自动</td></tr><tr><td>进程崩溃 / 掉电</td><td>整机级别中断</td><td>重启后读快照 → 重建队列 → running 转 resumable → 从最后一个 checkpoint 续跑</td><td>自动</td></tr><tr><td>商品一致性校验失败</td><td>产物质量不合格（主观维度的自动化代理）</td><td>自动 re-anchor 到原始锚图重出一版，仍失败则标记为「待人工挑」</td><td>自动，1 次</td></tr></tbody></table></div><div class="note danger"><span class="nt">无云端兜底在这里的具体含义</span>「模型缺失」这一类错误的正确反应是<strong>暂停并告诉用户去拷贝权重文件</strong>，不是自动联网下载、更不是切到云 API。这条最能体现端侧意识。</div></section><section id="persist"><h2><span class="n">06</span>不丢稿：三层持久化 + 幂等复现</h2><div class="tw"><table><thead><tr><th>层</th><th>存什么</th><th>时机</th><th>恢复时怎么用</th></tr></thead><tbody><tr><td>L1 草稿层</td><td>画布状态、图层、涂抹蒙版、用户编辑历史</td><td>每次编辑防抖 300ms 即写本地快照</td><td>重启直接还原画布，用户无感</td></tr><tr><td>L2 参数层</td><td><code>workflow_api.json</code>、prompt、seed、锚图哈希、模板版本、模型版本</td><td>任务入队时一次性写入，只读不可变</td><td>重建队列、重出同一张图、追溯「这张图怎么来的」</td></tr><tr><td>L3 产物层</td><td>每张成品图、中间候选、checkpoint</td><td>每张出图立即落盘（增量，不攒批）</td><td>中断后已完成的图不丢；失败任务从最后一张续</td></tr></tbody></table></div><h3>三个让「不丢稿」真正成立的工程约定</h3><ul><li><strong>幂等</strong>：任务 ID 由「锚图哈希 + 参数 + seed」生成，重复提交或重复恢复不会产生第二份产物。</li><li><strong>可复现</strong>：固定 seed + 固定模型版本 + 固定参数，随时能重出客户要的那张图；这也是主观评测能复议的前提。</li><li><strong>写前日志</strong>：先记「即将做什么」再执行，崩溃时才知道断在哪一步，而不是靠猜。</li></ul><div class="note good"><span class="nt">验收口径</span>草稿丢失率 = 0、崩溃恢复成功率 = 100%、中断响应 ≤ 3 秒。这三个数字写进文档 ① 的客观指标里，形成闭环。</div></section><section id="edge"><h2><span class="n">07</span>边界：明确不承诺什么</h2><ul><li>不承诺「同时跑 N 个生成任务」——单卡物理上限，承诺的是同时提交、边跑边改、按优先级响应。</li><li>不承诺模型缺失能自愈——离线环境下只能由用户补文件。</li><li>不承诺无限队列——磁盘与显存都有上限，达到阈值走降级阶梯 L5 明确拒绝新任务。</li><li>不承诺跨设备同步——账号只做本地使用者区分与授权，不做云同步。</li></ul><p>把边界写清楚，比把功能写满更像一个真正做过端侧产品的 PM。</p></section><section id="ask"><h2><span class="n">08</span>老师可能追问什么</h2><div class="grid"><div class="card"><div class="ct">「为什么不用最强的 FLUX.2？」</div><div class="cb">两个硬理由：社区许可非商用（电商/短剧都是要交货的），且 32B 模型 33.8GB 超出 24GB 显存，offload 后单张要几分钟，端侧批量不现实。</div></div><div class="card"><div class="ct">「没有云端兜底，慢了怎么办？」</div><div class="cb">答降级阶梯：降分辨率 → 减步数 → 卸载大模型 → 暂停后台保前台 → 明确拒绝并提示。绝不静默失败，也绝不偷调云 API。</div></div><div class="card"><div class="ct">「主观效果怎么算评估？」</div><div class="cb">答盲测 + 5 分制评分表 + 多人取均值 + 锚图 A/B + 固定 seed 可复现。主观维度也要可操作、可复议。</div></div><div class="card"><div class="ct">「并发不就是把任务排队吗？」</div><div class="cb">答四层：状态机、优先级与配额、按错误类型分类恢复、三层持久化（草稿 / 参数 / 产物）。排队只是第一层。</div></div></div></section><section id="ref"><h2><span class="n">09</span>参考依据</h2><h3>参考依据（真实开源项目与公开资料，2026-11 核实）</h3>
+<div class="src">
+1. <a href="https://github.com/comfyanonymous/ComfyUI">comfyanonymous/ComfyUI</a> — 节点式工作流、可导出 API JSON、原生任务队列，是本方案的运行框架。<br>
+2. <a href="https://github.com/city96/ComfyUI-GGUF">city96/ComfyUI-GGUF</a> — 加载 GGUF 量化权重，提供 <code>Unet Loader (GGUF)</code> 等节点。<br>
+3. <a href="https://docs.comfy.org/zh-CN/development/cloud/api-reference">ComfyUI 官方 API 参考</a> — <code>/prompt</code>、<code>/queue</code>、<code>/interrupt</code>、<code>/history</code>、<code>/system_stats</code>，以及 <code>execution_error</code> 中的 <code>OOMError</code> 等异常类型。<br>
+4. <a href="https://github.com/Wan-Video/Wan2.2">Wan-Video/Wan2.2</a>（Apache 2.0）、<a href="https://github.com/Lightricks/LTX-Video">Lightricks/LTX-Video</a> — 本地视频生成主力与轻量备选。<br>
+5. <a href="https://github.com/QwenLM/Qwen-Image">QwenLM/Qwen-Image</a>、<a href="https://github.com/Tongyi-MAI/Z-Image">Tongyi-MAI/Z-Image</a> — Apache 2.0 可商用的图像模型。<br>
+6. <a href="https://github.com/tencent-ailab/IP-Adapter">tencent-ailab/IP-Adapter</a>、<a href="https://github.com/InstantX/InstantID">InstantX/InstantID</a> — 一致性方案；注意 InstantID / PuLID 依赖的 InsightFace 权重为非商用研究许可。<br>
+7. <a href="https://github.com/lllyasviel/FramePack">lllyasviel/FramePack</a> — 低显存长视频思路。<br>
+8. 显存与速度实测：<a href="https://devpress.csdn.net/awstech/6a463080662f9a54cb87d0e6.html">RTX 4090 本地部署 FLUX.2 / Qwen-Image / Z-Image 对比（2026）</a>；<a href="https://hypeart.ai/glossary/local-ai-video-generator">Local AI Video Generator 2026</a>；<a href="https://willitrunai.com/blog/video-generation-gpu-guide-2026">Video Generation VRAM Guide 2026</a>。
+</div>
+<div class="note warm"><span class="nt">关于版本</span>模型与量化版本迭代很快，文中数字是<strong>选型测算的工程量级</strong>，不是承诺的实测跑分；真机落地前需用固定 seed 与固定提示词集重测一遍。</div></section>
+<footer>端侧 AI Studio · AI 产品测试题作业交付 · 全部推理在本地完成，无云端兜底<br>生成日期：2026-11-04</footer>
+</div>
+</body>
+</html>

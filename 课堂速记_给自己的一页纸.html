@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>课堂速记 · 给自己的一页纸</title>
+<style>
+:root{--ink:#1f2937;--ink2:#4b5563;--ink3:#6b7280;--line:#e5e7eb;--bg:#f6f8fb;
+--blue:#1d4ed8;--blue-bg:#eff6ff;--blue-line:#bfdbfe;--teal:#0f766e;--teal-bg:#f0fdfa;
+--amber:#b45309;--amber-bg:#fffbeb;--red:#b91c1c;--red-bg:#fef2f2;--purple:#6d28d9;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+header.hero{background:#fff;border-bottom:1px solid var(--line);border-top:4px solid var(--blue);margin-bottom:28px}
+.hero-in{max-width:1080px;margin:0 auto;padding:30px 24px 26px}
+.kicker{display:inline-block;font-size:12px;letter-spacing:.08em;color:var(--blue);background:var(--blue-bg);
+border:1px solid var(--blue-line);border-radius:99px;padding:3px 12px;margin-bottom:14px}
+h1{font-size:27px;line-height:1.35;margin:0 0 8px;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--ink2);font-size:14px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.meta span{font-size:12px;color:var(--ink2);background:#f3f4f6;border-radius:6px;padding:4px 10px}
+nav.toc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:26px;
+display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:13px;color:var(--ink2);text-decoration:none;padding:5px 11px;border-radius:7px;background:#f9fafb;border:1px solid var(--line)}
+nav.toc a:hover{color:var(--blue);border-color:var(--blue-line);background:var(--blue-bg)}
+section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin-bottom:20px}
+h2{font-size:20px;margin:0 0 16px;font-weight:650;letter-spacing:-.01em;scroll-margin-top:20px}
+h2 .n{display:inline-block;font-size:12px;color:#fff;background:var(--blue);border-radius:6px;
+padding:2px 8px;margin-right:10px;vertical-align:3px;font-weight:500}
+h3{font-size:16px;margin:22px 0 10px;font-weight:650}
+h3:first-of-type{margin-top:4px}
+p{margin:10px 0}
+ul,ol{margin:10px 0;padding-left:22px}
+li{margin:6px 0}
+strong{font-weight:650}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:#f3f4f6;
+border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#9a3412}
+.tw{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:600px}
+th{background:#f8fafc;text-align:left;font-weight:650;color:var(--ink);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #f1f3f5;vertical-align:top;color:var(--ink2)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fafbfc}
+td:first-child{color:var(--ink);font-weight:550}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fcfdfe}
+.card .ct{font-weight:650;font-size:14px;margin-bottom:6px;color:var(--ink)}
+.card .cb{font-size:13px;color:var(--ink2);line-height:1.65}
+.note{border-left:3px solid var(--blue);background:var(--blue-bg);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:14px}
+.note.warm{border-color:var(--amber);background:var(--amber-bg)}
+.note.danger{border-color:var(--red);background:var(--red-bg)}
+.note.good{border-color:var(--teal);background:var(--teal-bg)}
+.note .nt{font-weight:650;margin-bottom:4px;display:block}
+.plain{background:var(--teal-bg);border:1px solid #99f6e4;border-radius:12px;padding:18px 22px;margin:0 0 20px}
+.plain .pt{font-weight:650;color:var(--teal);font-size:14px;margin-bottom:8px}
+.plain p{margin:6px 0;font-size:14.5px}
+.svgbox{overflow-x:auto;margin:18px 0;text-align:center}
+.svgbox svg{max-width:100%;height:auto}
+.tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:5px;margin-right:5px;font-weight:600}
+.tag.b{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-line)}
+.tag.t{background:var(--teal-bg);color:var(--teal);border:1px solid #99f6e4}
+.tag.a{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a}
+.tag.r{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;font-size:13px}
+.flow .step{background:#fff;border:1px solid var(--blue-line);border-radius:8px;padding:8px 12px;color:var(--blue);font-weight:550}
+.flow .arw{color:var(--ink3)}
+footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:28px 0 0;border-top:1px solid var(--line);margin-top:30px}
+.src{font-size:12.5px;color:var(--ink2);line-height:1.9}
+.src a{color:var(--blue);text-decoration:none;word-break:break-all}
+.src a:hover{text-decoration:underline}
+@media(max-width:640px){.wrap{padding:0 14px 50px}.hero-in{padding:22px 14px}section{padding:20px 16px}h1{font-size:22px}}
+@media print{body{background:#fff}nav.toc{display:none}section{break-inside:avoid;box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-in">
+<span class="kicker">课前 3 分钟 · 大白话答辩提纲</span>
+<h1>课堂速记 · 给自己的一页纸</h1>
+<p class="sub">不用背术语。下面每一段彩色框里的话，都可以直接说出口。</p>
+<div class="meta"><span>给自己看的</span><span>不属于必交内容</span><span>可直接打印</span><span>2026-11-04</span></div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a href="#one">01 记住一句</a><a href="#qa">02 六个问题</a><a href="#demo">03 演示顺序</a><a href="#last">04 兜底与交作业</a></nav>
+<style>
+.say{background:#f8fbff;border-left:4px solid #1d4ed8;border-radius:0 10px 10px 0;
+padding:13px 18px 15px;margin:8px 0 18px;font-size:16px;line-height:1.95;color:#1f2937}
+.say::before{content:"照着说";display:block;font-size:11px;letter-spacing:.08em;color:#1d4ed8;
+font-weight:600;margin-bottom:4px}
+.say.big{font-size:18px;background:#f0fdfa;border-color:#0f766e;font-weight:500}
+.say.big::before{content:"开场就能说 / 只让说一句时也说它";color:#0f766e}
+.q{font-size:16px;font-weight:650;margin:24px 0 2px;color:#1f2937}
+.q .num{display:inline-block;background:#1d4ed8;color:#fff;font-size:12px;border-radius:6px;
+padding:2px 8px;margin-right:8px;vertical-align:2px;font-weight:500}
+.demo{background:#fcfdfe;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0;font-size:15px}
+.demo b{color:var(--blue);font-weight:650}
+.soft{color:#6b7280;font-size:13.5px}
+@media print{.say{font-size:14px}.say.big{font-size:15px}}
+</style><section id="one"><h2><span class="n">01</span>先记住这一句</h2><div class="say big">这台机器不能联网，所以我所有设计都在回答同一个问题：算力不够的时候，怎么让用户还能按时交货、而且不丢稿。</div><p class="soft">上面这句是整份作业的主线。开场可以说它，被问到任何细节都可以绕回它。下面 6 段话都是大白话，看一遍就能说出来，不需要背术语。</p></section><section id="qa"><h2><span class="n">02</span>老师可能问的 6 个问题</h2><div class="q"><span class="num">1</span>这套作业你交了什么？</div><div class="say">我做了两个场景，电商素材和短剧自动化，每个场景都是三份文档加一个能点的 Demo。另外补了一层 Dify 工作流和本地接口，是为了兑现题目里「接入 API」那半句，证明背后真的有一条能跑的流程。</div><div class="q"><span class="num">2</span>为什么选这个模型？</div><div class="say">我先假设这台机器只有一张 24G 显卡，而且完全不能联网。所以主力选了一个跑得快的，几秒一张，够批量用；只有图上要写中文字的时候，才临时换一个大模型，用完就卸掉。还有一点我特意查了：选的这些模型都允许商用。电商图是要交给客户卖货的，有几个很火的模型恰恰不许商用，我就排除了。</div><div class="q"><span class="num">3</span>质量和速度只能保一个，你保哪个？</div><div class="say">我保速度。因为用这个产品的人是靠批量交图吃饭的，出得慢就交不了货。画质差一点还有补救办法：多出几张候选让人挑。但慢了没补救，因为不能偷偷调云端。所以我把「精修」做成一个开关，赶时间的时候不开，而不是一刀切。</div><div class="q"><span class="num">4</span>为什么这两个场景适合放在本地跑？</div><div class="say">电商这边全是图片，任务能排队，素材又保密不想上传，挂一晚上批量跑完就行。短剧那边我没有硬吹：本地跑视频确实吃力，所以我主动把范围砍成五秒以内的短镜头、先出关键帧再出片，而不是假装什么都能做。先把边界划清楚，剩下的方案才站得住。</div><div class="q"><span class="num">5</span>同时生成很多张、还能边生成边编辑，怎么不崩？</div><div class="say">我给每个任务都记了状态：排队、在跑、失败、完成。用户点中断，几秒内就把显卡让出来；崩了能按任务接着跑；每改一步都自动存在本机，刷新页面甚至断电，草稿都还在。短剧更麻烦，一个镜头要跑好几分钟，所以我按一小段一小段存进度，崩了只重跑那一小段，不用从头来。</div><div class="q"><span class="num">6</span>用云或者 RunningHub 不是更省事吗？</div><div class="say">确实更省事，但题目写死了「全部推理在本地、无云端兜底」，接上去这道题的前提就没了。所以我是把它当成「考虑过、主动排除」写进文档的，然后给本地准备了别的退路：降分辨率、少出几张候选、排队、实在不行就明确拒绝新任务并告诉用户原因。</div></section><section id="demo"><h2><span class="n">03</span>演示时按这个顺序点，边点边说</h2><div class="demo"><b>第 1 步</b>　打开 index.html：「这是总览，两套的交付都从这里进去。」</div><div class="demo"><b>第 2 步</b>　进电商 Demo，点「批量生成」：「任务进队列了，前台还能继续编辑。」</div><div class="demo"><b>第 3 步</b>　点「模拟失败」→「恢复」→ 刷新页面：「草稿还在，这就是不丢稿。」</div><div class="demo"><b>可选第 4 步</b>　如果开了本地服务，勾「接入本地 Dify 工作流」→ 点「测试连接」：「这是真的调了一次本机接口；服务没开它会自动回退，界面不会卡死。」</div><div class="note warm"><span class="nt">有一句要主动说，别等老师问</span>默认跑的是<strong>离线模式</strong>：本地服务不加载模型权重、不产出真实图片，验证的是「一句话 → 拆成任务 → 本机队列 → 回包」这条链路。真机上把提交那一步换成本地出图接口就能出像素。课堂上主动讲清这句，比假装能出图稳得多。</div><div class="q"><span class="num">C</span>如果老师问「我没有显卡，你怎么验证的」</div><div class="say">「我分了两层：编排层本来就不需要显卡，队列、中断、恢复、自动存稿都能在这台电脑上真跑；至于像素，我用一条单独的开发通道验证过，也算过 24G 显卡换成 16G 统一内存时哪些档位要砍。那条联网通道只用于开发演示，不写进作业正文，正式方案里没有任何自动上云的兜底。」</div></section><section id="last"><h2><span class="n">04</span>万一被问倒，以及交之前</h2><div class="q"><span class="num">A</span>答不上来时，用这两句兜底（不要编）</div><div class="say">「这块我是按一台 24G 显卡、完全离线的假设写的，如果机器配置变了，我会重新算一遍显存和模型档位再给结论。」「这个具体数字我一下记不准，文档里写了依据，我回去核对一下。」</div><div class="q"><span class="num">B</span>交之前只做三件事</div><div class="say">① 看一眼 index.html 第 03 节的机器配置，和老师给的对不上就告诉我改；② 把两个 Demo 各点一遍「生成 → 失败 → 恢复 → 刷新」；③ 整个文件夹右键压缩成 zip 交上去，不用一个个挑文件，也不用先把服务跑起来。</div><div class="note good"><span class="nt">最后提醒自己</span>模型名、量化、显存表、Dify 配置、Python 这些是文档里撑门面的内容，你不用背、不用配、不用跑。真被问到，说一句「这是端侧约束下的取舍，文档里写了理由」就够了。</div></section>
+<footer>端侧 AI Studio · AI 产品测试题作业交付 · 全部推理在本地完成，无云端兜底<br>生成日期：2026-11-04</footer>
+</div>
+</body>
+</html>

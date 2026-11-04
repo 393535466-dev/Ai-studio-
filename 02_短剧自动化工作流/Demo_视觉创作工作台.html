@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo · 视觉创作工作台｜短剧自动化工作流</title>
+<style>
+:root{--ink:#1f2937;--ink2:#4b5563;--ink3:#6b7280;--line:#e5e7eb;--bg:#f4f6fa;
+--blue:#1d4ed8;--blue2:#eff6ff;--bluel:#bfdbfe;--teal:#0f766e;--teal2:#f0fdfa;
+--amber:#b45309;--amber2:#fffbeb;--red:#b91c1c;--red2:#fef2f2;--green:#15803d;--purple:#6d28d9;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.6}
+button,select,textarea,input{font-family:inherit;font-size:13px}
+button{cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:7px 12px;transition:.15s}
+button:hover{border-color:var(--blue);color:var(--blue)}
+button.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+button.primary:hover{background:#1e40af;color:#fff}
+button.warn{border-color:#fca5a5;color:var(--red);background:var(--red2)}
+button.ok{border-color:#86efac;color:var(--green);background:#f0fdf4}
+button:disabled{opacity:.42;cursor:not-allowed}
+.top{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:16px;letter-spacing:-.02em}
+.brand small{font-weight:400;color:var(--ink3);font-size:12px;margin-left:8px}
+.badge{font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--teal2);color:var(--teal);border:1px solid #99f6e4}
+.badge.lim{background:var(--amber2);color:var(--amber);border-color:#fde68a}
+.top .spacer{flex:1}
+.link{font-size:12.5px;color:var(--blue);text-decoration:none;padding:5px 10px;border:1px solid var(--bluel);border-radius:8px;background:var(--blue2)}
+.link:hover{background:#dbeafe}
+.power{background:#fff;border-bottom:1px solid var(--line);padding:9px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+.bar{width:130px;height:7px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .35s}
+.bar.hot>i{background:var(--amber)}
+.lvl{font-weight:600;color:var(--teal)}.lvl.hot{color:var(--amber)}
+.app{display:grid;grid-template-columns:250px minmax(0,1fr) 240px;gap:14px;padding:14px 20px;max-width:1440px;margin:0 auto}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.panel h3{margin:0 0 10px;font-size:13px;font-weight:700;color:var(--ink2);letter-spacing:.02em}
+textarea{width:100%;min-height:104px;padding:9px;border:1px solid var(--line);border-radius:8px;resize:vertical;line-height:1.6}
+.scriptbtn{width:100%;margin-top:8px}
+.shotlist{max-height:250px;overflow:auto;margin-top:12px}
+.shotrow{display:flex;gap:8px;align-items:center;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:12px}
+.shotrow:hover{border-color:var(--bluel)}
+.shotrow.on{border-color:var(--blue);background:var(--blue2)}
+.shotrow .no{font-weight:700;color:var(--blue);width:26px;flex:none}
+.shotrow .txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.role{background:var(--teal2);border:1px solid #99f6e4;border-radius:11px;padding:12px;margin-bottom:12px}
+.role .rh{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13px;color:var(--teal)}
+.face{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#e7c9a9,#c98f6b);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.12);flex:none}
+.role input{width:auto}
+.risk{margin-top:9px;font-size:11.5px;color:var(--red);background:var(--red2);border:1px solid #fecaca;border-radius:7px;padding:8px;display:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px}
+.shot{background:#fff;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.shot.on{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue2)}
+.shot .pic{height:96px;display:flex;align-items:center;justify-content:center;position:relative}
+.shot .pic .tag{position:absolute;left:6px;top:6px;font-size:10px;background:rgba(255,255,255,.9);border-radius:4px;padding:1px 5px;color:var(--ink2)}
+.shot .bd{padding:9px}
+.shot .tt{font-size:12px;font-weight:700;margin-bottom:3px}
+.shot .ds{font-size:11px;color:var(--ink3);height:32px;overflow:hidden;line-height:1.45}
+.segs{display:flex;gap:3px;margin:7px 0}
+.segs i{flex:1;height:7px;border-radius:3px;background:#e5e7eb}
+.segs i.done{background:#4ade80}.segs i.cur{background:#fbbf24}.segs i.bad{background:#f87171}
+.shot .st{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;display:inline-block}
+.st.draft{background:#f1f5f9;color:#475569}.st.keyframe{background:var(--blue2);color:var(--blue)}
+.st.approved{background:#f0fdf4;color:var(--green)}.st.rejected{background:var(--red2);color:var(--red)}
+.st.rendering{background:var(--amber2);color:var(--amber)}.st.done{background:var(--teal2);color:var(--teal)}
+.st.failed{background:var(--red2);color:var(--red)}.st.interrupted{background:#f5f3ff;color:var(--purple)}
+.rv{font-size:12px;color:var(--ink2)}
+.rv textarea{min-height:64px;margin:8px 0}
+.rv .btns{display:flex;gap:6px;flex-wrap:wrap}
+.rv .btns button{flex:1;min-width:88px}
+.quick{background:var(--amber2);border:1px solid #fde68a;border-radius:9px;padding:10px;font-size:11.5px;color:var(--amber);margin-top:10px}
+.queue{max-width:1440px;margin:0 auto;padding:0 20px 30px}
+.qhead{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+.qhead h3{margin:0;font-size:14px;font-weight:700}
+.qhead .spacer{flex:1}
+.task{display:grid;grid-template-columns:170px 1fr 110px 100px;gap:10px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:#fff;font-size:12.5px}
+.task .tname{font-weight:600}.task .tsub{font-size:11px;color:var(--ink3)}
+.pbar{height:7px;background:#eef0f4;border-radius:99px;overflow:hidden}
+.pbar>i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .25s}
+.stq{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;text-align:center;white-space:nowrap}
+.stq.queued{background:#f1f5f9;color:#475569}.stq.running{background:var(--amber2);color:var(--amber)}
+.stq.succeeded{background:#f0fdf4;color:var(--green)}.stq.failed{background:var(--red2);color:var(--red)}
+.stq.interrupted,.stq.resumable{background:#f5f3ff;color:var(--purple)}.stq.cancelled{background:#f1f5f9;color:#475569}
+.tact{display:flex;gap:4px;justify-content:flex-end}.tact button{padding:3px 7px;font-size:11px;border-radius:6px}
+.log{background:#0f172a;color:#cbd5e1;border-radius:10px;padding:11px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.7;max-height:130px;overflow:auto;margin-top:10px}
+.log .ok{color:#86efac}.log .er{color:#fca5a5}.log .wn{color:#fcd34d}
+.foot{text-align:center;color:var(--ink3);font-size:12px;padding:0 20px 26px}
+@media(max-width:980px){.app{grid-template-columns:1fr}.task{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand">AI Studio <small>视觉创作工作台 · 短剧自动化工作流</small></div>
+  <span class="badge" id="modeBadge">离线 · 全部推理在本地</span>
+  <span class="badge lim">端侧边界：≤5s / 480–720p / 非实时</span>
+  <div class="spacer"></div>
+  <a class="link" href="../index.html">交付总览</a>
+  <a class="link" href="../01_电商素材工作流/Demo_视觉创作工作台.html">切换：电商素材 &rarr;</a>
+</div>
+
+<div class="power">
+  <span>显存</span><div class="bar" id="vbar"><i id="vfill" style="width:32%"></i></div><span id="vtxt">7.8 / 24 GB</span>
+  <span>帧缓存</span><strong id="cache">0 GB</strong>
+  <span>执行槽</span><strong id="slot">0 / 1</strong>
+  <span>预计完成</span><strong id="eta">—</strong>
+  <span>降级</span><span class="lvl" id="lvl">L0 正常</span>
+  <div class="spacer" style="flex:1"></div><span id="save">自动存稿 · 已就绪</span>
+</div>
+
+<div class="app">
+  <div class="panel">
+    <h3>剧本 / 分镜解析器 <span style="font-weight:400;color:var(--ink3);font-size:11px">本地 Qwen3-4B</span></h3>
+    <textarea id="script">夜色，便利店门口。林夏抱着纸箱走出来，抬头看见路灯下站着陈屿。
+陈屿：「我等了很久。」林夏停住脚步，没说话。
+镜头切到两人坐在台阶上，城市灯光在远处。林夏终于笑了一下。</textarea>
+    <button class="primary scriptbtn" id="btnParse">解析为结构化分镜</button>
+    <div class="quick" style="margin-top:9px;border-top:1px dashed var(--line);padding-top:8px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px"><input type="checkbox" id="apiOn"> 接入本地 Dify 工作流（127.0.0.1:8765）</label>
+      <div id="apiState" style="font-size:11.5px;color:var(--ink3);margin:5px 0 7px">未连接 · 当前使用内置分镜模板</div>
+      <button id="btnApiTest" style="width:100%">测试工作流连接</button>
+    </div>
+    <div class="shotlist" id="shotlist"></div>
+  </div>
+
+  <div class="panel">
+    <div class="role">
+      <div class="rh"><span class="face" id="face"></span>
+        <div style="flex:1">角色卡 · 林夏 / 陈屿<br><span style="font-weight:400;font-size:11px;color:var(--ink2)">3–5 张多视角锚图 · LoRA · 版本 v3</span></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;margin-top:10px">
+        <input type="checkbox" id="anchor" checked> 每镜头 re-anchor 到原始锚图（推荐）
+      </label>
+      <div class="risk" id="risk">已关闭 re-anchor：将以上一镜头输出作参考，身份会逐镜漂移。生成结果会标红提示。</div>
+    </div>
+    <h3>镜头卡片墙 <span style="font-weight:400;color:var(--ink3);font-size:11px">点卡片选中，右侧审片</span></h3>
+    <div class="grid" id="shots"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="primary" id="btnKey">批量生成关键帧</button>
+      <button id="btnRender">渲染已通过镜头（I2V）</button>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px"><input type="checkbox" id="night"> 夜间批量模式</label>
+    </div>
+    <div class="quick">图先行策略：先用秒级成本定稿关键帧、审片通过后才动视频。把昂贵的视频算力只花在会交付的镜头上。</div>
+  </div>
+
+  <div class="panel rv">
+    <h3>审片台</h3>
+    <div id="rvBody">先在中间选中一个镜头。</div>
+    <div class="quick" style="margin-top:14px">打回会生成 P0 增量任务插到队首，只重跑这一个镜头，其他镜头与已完成帧段不受影响。</div>
+  </div>
+</div>
+
+<div class="queue">
+  <div class="panel">
+    <div class="qhead">
+      <h3>批量队列 <span style="font-weight:400;color:var(--ink3);font-size:11.5px">镜头级排队 · 帧段 checkpoint · 失败隔离</span></h3>
+      <div class="spacer"></div>
+      <button id="btnPause">暂停队列</button>
+      <button id="btnInterrupt" class="warn">中断本镜头</button>
+      <button id="btnOOM">模拟失败</button>
+      <button id="btnReset">清空队列</button>
+    </div>
+    <div id="tasks"></div>
+    <div class="log" id="log"></div>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--ink3)">刷新页面：剧本、分镜、锚图、审片批注、队列与帧段进度都会还原。中断 / 失败后点「续跑」从最后落盘的帧段继续。</div>
+  </div>
+</div>
+
+<div class="foot">端侧 AI Studio 交互原型 · 短剧自动化工作流 · 默认内置模拟编排；勾选后可接入本机 127.0.0.1:8765 的 Dify 工作流，全程不出网、无云端兜底</div>
+
+<script>
+(function(){
+"use strict";
+var KEY="aistudio_drama_demo_v1";
+var $=function(id){return document.getElementById(id)};
+var API_BASE="http://127.0.0.1:8765";
+var SCRIPT_DEFAULT="夜色，便利店门口。林夏抱着纸箱走出来，抬头看见路灯下站着陈屿。\n陈屿：「我等了很久。」林夏停住脚步，没说话。\n镜头切到两人坐在台阶上，城市灯光在远处。林夏终于笑了一下。";
+var TEMPLATES=[
+ {scene:"全景",action:"便利店门口，林夏抱纸箱走出",dur:"4s"},
+ {scene:"中景",action:"路灯下陈屿静静站着",dur:"3s"},
+ {scene:"近景",action:"林夏停住脚步，欲言又止",dur:"3s"},
+ {scene:"特写",action:"陈屿开口说话，侧脸",dur:"3s"},
+ {scene:"过肩",action:"两人坐台阶，远处城市灯光",dur:"5s"},
+ {scene:"特写",action:"林夏终于笑了一下",dur:"3s"}
+];
+var state={script:SCRIPT_DEFAULT,shots:[],tasks:[],anchor:true,night:false,paused:false,apiOn:false,
+           running:null,seq:0,sel:0,reviews:{},drift:0};
+function esc(u){return String(u||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+function apiState(txt,kind){
+  $("apiState").textContent=txt;
+  $("apiState").style.color=kind==="ok"?"#0f766e":(kind==="er"?"#b91c1c":"#6b7280");
+}
+function setMode(o){
+ var b=$("modeBadge");if(!b)return;
+ if(o&&o.dev_only===true){
+  b.textContent="DEV ONLY · 联网演示模式";
+  b.style.background="#fffbeb";b.style.color="#b45309";b.style.borderColor="#fde68a";
+ }else{
+  b.textContent="离线 · 全部推理在本地";
+  b.style.background="";b.style.color="";b.style.borderColor="";
+ }
+}
+function callWorkflow(inputs,onOk,onFail){
+  fetch(API_BASE+"/v1/workflows/run",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({inputs:inputs,response_mode:"blocking",user:"studio-local"})})
+   .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()})
+   .then(function(j){var o=(j.data&&j.data.outputs)||{};setMode(o);onOk(o)})
+   .catch(function(e){onFail(e)});
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$("save").textContent="自动存稿 · "+new Date().toLocaleTimeString("zh-CN",{hour12:false})}catch(e){$("save").textContent="自动存稿 · 不可用"}}
+function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s){state=Object.assign(state,s);if(state.running){state.tasks.forEach(function(t){if(t.status==="running")t.status="resumable"});state.running=null;}}}catch(e){}}
+function log(m,k){var d=document.createElement("div");d.className=k||"";d.textContent="["+new Date().toLocaleTimeString("zh-CN",{hour12:false})+"] "+m;$("log").appendChild(d);$("log").scrollTop=$("log").scrollHeight}
+function faceSVG(drift){
+ var skin=drift?"#d8a07f":"#e7c9a9",hair=drift?"#6b4b3e":"#3f3330";
+ return '<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">'
+ +'<rect width="60" height="60" rx="30" fill="'+(drift?"#e8d5c8":"#dbeafe")+'"/>'
+ +'<circle cx="30" cy="25" r="13" fill="'+skin+'"/>'
+ +'<path d="M17 24 Q17 10 30 10 Q43 10 43 24 L43 19 Q38 14 30 14 Q22 14 17 19 Z" fill="'+hair+'"/>'
+ +'<circle cx="25" cy="26" r="1.6" fill="#3f3330"/><circle cx="35" cy="26" r="1.6" fill="#3f3330"/>'
+ +'<path d="M26 32 Q30 35 34 32" stroke="#a86b58" stroke-width="1.4" fill="none"/>'
+ +'<path d="M12 60 Q12 43 30 43 Q48 43 48 60 Z" fill="'+(drift?"#8b6f9c":"#6b8fc7")+'"/>'
+ +'</svg>';
+}
+function shotPic(sh){
+ if(sh.img)return '<img src="'+esc(sh.img)+'" alt="真实关键帧" style="width:100%;height:100%;object-fit:cover;display:block">';
+ var drift=!state.anchor&&sh.seg>0;
+ var bg=drift?"linear-gradient(135deg,#f3d9d0,#d9b8c8)":"linear-gradient(135deg,#dce7f5,#b9cfc4)";
+ return '<div style="width:100%;height:100%;background:'+bg+';display:flex;align-items:center;justify-content:center">'
+ +'<div style="width:54px;height:54px;border-radius:50%;overflow:hidden">'+faceSVG(drift)+'</div></div>';
+}
+function drawShots(){
+ if(!state.shots.length){$("shots").innerHTML='<div style="color:var(--ink3);font-size:12.5px;padding:10px">还没有分镜。左侧粘贴剧本后点「解析为结构化分镜」。</div>';return}
+ $("shots").innerHTML=state.shots.map(function(s,i){
+  var segs="";for(var k=0;k<5;k++){var cls=k<s.seg?"done":(s.status==="rendering"&&k===s.seg?"cur":"");segs+='<i class="'+cls+'"></i>'}
+  return '<div class="shot'+(i===state.sel?' on':'')+'" data-i="'+i+'">'
+  +'<div class="pic">'+shotPic(s)+'<span class="tag">镜头 '+(i+1)+' · '+s.scene+'</span></div>'
+  +'<div class="bd"><div class="tt">'+s.action.slice(0,11)+(s.action.length>11?'…':'')+'</div>'
+  +'<div class="ds">'+s.dur+' · '+s.action+'</div><div class="segs">'+segs+'</div>'
+  +'<span class="st '+s.status+'">'+statusLabel(s.status)+'</span>'
+  +(s.drift?' <span style="font-size:10px;color:var(--red)">身份漂移</span>':'')
+  +'</div></div>';
+ }).join("");
+ Array.prototype.forEach.call(document.querySelectorAll(".shot"),function(el){el.onclick=function(){state.sel=+el.dataset.i;drawShots();drawReview();save()}});
+}
+function drawShotList(){
+ $("shotlist").innerHTML=state.shots.length?state.shots.map(function(s,i){return '<div class="shotrow'+(i===state.sel?' on':'')+'" data-i="'+i+'"><span class="no">'+(i+1)+'</span><span class="txt">'+s.scene+' · '+s.action+'</span><span style="color:var(--ink3);font-size:10px">'+s.dur+'</span></div>'}).join(""):'<div style="color:var(--ink3);font-size:12px">等待解析…</div>';
+ Array.prototype.forEach.call(document.querySelectorAll(".shotrow"),function(el){el.onclick=function(){state.sel=+el.dataset.i;drawShotList();drawShots();drawReview();save()}});
+}
+function drawReview(){
+ if(!state.shots.length||!state.shots[state.sel]){$("rvBody").textContent="先在中间选中一个镜头。";return}
+ var i=state.sel,s=state.shots[i],r=state.reviews[i]||"";
+ $("rvBody").innerHTML='<div style="font-weight:700;margin-bottom:4px">镜头 '+(i+1)+' · '+s.scene+'</div>'
+ +'<div style="font-size:11.5px;color:var(--ink3);margin-bottom:8px">'+s.action+' / '+s.dur+' / 状态：'+statusLabel(s.status)+'</div>'
+ +'<label style="font-size:11.5px;color:var(--ink3)">审片批注（写回流水线）</label>'
+ +'<textarea id="rvText" placeholder="例如：人物侧脸不像、光线太亮">'+r+'</textarea>'
+ +'<div class="btns"><button class="ok" data-a="approve">通过</button><button class="warn" data-a="reject">打回重做</button></div>';
+ $("rvText").oninput=function(){state.reviews[i]=this.value;save()};
+ Array.prototype.forEach.call(document.querySelectorAll("[data-a]"),function(b){b.onclick=function(){review(b.dataset.a)}});
+}
+function statusLabel(s){return {draft:"待生成",keyframe:"关键帧完成",approved:"审片通过",rejected:"已打回",rendering:"视频渲染中",done:"成片完成",failed:"渲染失败",interrupted:"已中断"}[s]||s}
+function review(a){
+ var i=state.sel,s=state.shots[i];if(!s)return;
+ if(a==="approve"){
+  if(s.status==="draft"){log("镜头 "+(i+1)+" 还没有关键帧，先生成","wn");return}
+  s.status="approved";log("镜头 "+(i+1)+" 审片通过，进入视频渲染资格队列","ok");
+ }else{
+  s.status="rejected";s.seg=0;s.drift=false;
+  addTask("重出关键帧 · 镜头 "+(i+1),"P0 审片打回 / re-anchor / 批注已附带",true,"keyframe",i);
+  log("镜头 "+(i+1)+" 打回 → 生成 P0 增量任务插队首，其他镜头不受影响","wn");
+ }
+ save();drawShots();drawShotList();drawReview();render();
+}
+function addTask(name,sub,prio,type,shotIdx){
+ var t={id:++state.seq,name:name,sub:sub,type:type,shot:shotIdx,status:"queued",progress:0,
+        seg:0,note:prio?"P0 前台增量 · 插队首":(state.night?"P3 夜间批量":"P2 批量"),prio:!!prio};
+ if(prio){var idx=state.tasks.findIndex(function(x){return x.status==="queued"&&!x.prio});if(idx<0)idx=state.tasks.length;state.tasks.splice(idx,0,t)}
+ else state.tasks.push(t);
+ return t;
+}
+function label(s){return {queued:"排队中",running:"运行中",succeeded:"已完成",failed:"失败",interrupted:"已中断",resumable:"可恢复",cancelled:"已取消"}[s]||s}
+function memUsed(){
+ var r=state.tasks.some(function(t){return t.status==="running"&&t.type==="video"});
+ return r?18.6:8.4;
+}
+function render(){
+ var m=memUsed(),hot=m>18;
+ $("vfill").style.width=(m/24*100).toFixed(1)+"%";$("vbar").className="bar"+(hot?" hot":"");
+ $("vtxt").textContent=m.toFixed(1)+" / 24 GB";
+ var segTotal=state.shots.reduce(function(a,s){return a+s.seg},0);
+ $("cache").textContent=(segTotal*0.6).toFixed(1)+" GB";
+ $("slot").textContent=(state.running?1:0)+" / 1";
+ var rem=state.tasks.filter(function(t){return t.status==="queued"||t.status==="running"}).length;
+ $("eta").textContent=rem?("约 "+(rem*1.6).toFixed(0)+" 分钟"+(state.night?"（夜间批量）":"")):"—";
+ $("lvl").textContent=hot?"L1 480p 预演档":"L0 正常";$("lvl").className="lvl"+(hot?" hot":"");
+ $("btnPause").textContent=state.paused?"继续队列":"暂停队列";
+ $("tasks").innerHTML=state.tasks.map(function(t){
+  var act="";
+  if(t.status==="failed")act='<button data-a="recover" data-id="'+t.id+'">续跑</button>';
+  else if(t.status==="interrupted"||t.status==="resumable")act='<button data-a="recover" data-id="'+t.id+'">从 checkpoint 续跑</button>';
+  else if(t.status==="queued")act='<button data-a="cancel" data-id="'+t.id+'">取消</button>';
+  else if(t.status==="succeeded")act='<button data-a="view" data-id="'+t.id+'">定位</button>';
+  return '<div class="task"><div><div class="tname">'+t.name+'</div><div class="tsub">'+t.sub+'</div></div>'
+  +'<div><div class="pbar"><i style="width:'+t.progress+'%"></i></div><div class="tsub" style="margin-top:3px">'+t.note+'</div></div>'
+  +'<div class="stq '+t.status+'">'+label(t.status)+'</div><div class="tact">'+act+'</div></div>';
+ }).join("")||'<div style="color:var(--ink3);font-size:12.5px;padding:8px">队列为空。先解析分镜，再生成关键帧。</div>';
+ Array.prototype.forEach.call(document.querySelectorAll("[data-a]"),function(b){b.onclick=function(){action(b.dataset.a,+b.dataset.id)}});
+}
+function action(a,id){
+ var t=state.tasks.find(function(x){return x.id===id});if(!t)return;
+ if(a==="cancel"){t.status="cancelled";t.note="POST /queue delete · 已从待执行列表移除";log("取消排队任务 #"+id,"wn")}
+ if(a==="view"){if(typeof t.shot==="number"){state.sel=t.shot;drawShots();drawShotList();drawReview()}log("定位到镜头 "+(t.shot+1))}
+ if(a==="recover"){
+  var from=t.seg;
+  t.status="queued";t.progress=from*20;
+  if(t.type==="video"){
+   t.note="OOM 分类恢复：720p→480p、帧数 121→77，从第 "+from+" 段续跑";
+   log("任务 #"+id+" 从帧段 checkpoint "+from+"/5 续跑，已完成帧段一帧不丢","ok");
+  }else{
+   t.note="re-anchor 到原始角色锚图重出关键帧";
+   log("一致性失败 → 回到关键帧 re-anchor 重出（不是重跑视频）","ok");
+  }
+ }
+ save();render();
+}
+function tick(){
+ if(!state.paused&&!state.running){
+  var t=state.tasks.find(function(x){return x.status==="queued"});
+  if(t){t.status="running";state.running=t.id;log("开始任务 #"+t.id+" · "+t.name+(t.type==="video"?"（I2V 5 帧段）":"（关键帧）"))}
+ }
+ var cur=state.tasks.find(function(x){return x.id===state.running});
+ if(cur&&cur.status==="running"){
+  cur.progress=Math.min(100,cur.progress+(cur.type==="video"?7:18));
+  if(cur.type==="video"){
+   cur.seg=Math.floor(cur.progress/20);
+   if(typeof cur.shot==="number")state.shots[cur.shot].seg=cur.seg;
+   cur.note="帧段 "+cur.seg+"/5 已落盘 · "+(state.night?"夜间批量":"预演档 480p");
+  }else cur.note="关键帧采样 "+cur.progress+"% · 锚图哈希已写入参数包";
+  if(cur.progress>=100){
+   cur.status="succeeded";cur.note="完成 · 参数 / seed / 锚图版本已存档";state.running=null;
+   if(typeof cur.shot==="number"){
+    var s=state.shots[cur.shot];
+    if(cur.type==="video"){s.status="done";s.seg=5}
+    else {s.status="keyframe";s.drift=!state.anchor}
+   }
+   log("任务 #"+cur.id+" 完成，产物增量落盘","ok");
+   drawShots();drawShotList();drawReview();save();
+  }
+ }
+ save();render();
+}
+function bind(){
+ $("script").value=state.script;
+ $("script").oninput=function(){state.script=this.value;save()};
+ $("anchor").checked=state.anchor;$("night").checked=state.night;
+ $("risk").style.display=state.anchor?"none":"block";
+ $("anchor").onchange=function(){state.anchor=this.checked;$("risk").style.display=state.anchor?"none":"block";
+  log(state.anchor?"已开启 re-anchor：每镜头回到原始锚图":"已关闭 re-anchor：角色身份将逐镜漂移",state.anchor?"ok":"er");save();drawShots()};
+ $("night").onchange=function(){state.night=this.checked;log(state.night?"启用夜间批量：白天让出算力给审片":"关闭夜间批量","wn");save()};
+ $("btnParse").onclick=function(){
+  function finish(fromApi){
+   state.sel=0;state.reviews={};
+   log(fromApi?"工作流回包解析完成："+state.shots.length+" 个结构化镜头（景别 / 动作 / 时长 / 提示词）":
+              "本地 Qwen3-4B 解析完成："+state.shots.length+" 个结构化镜头（景别 / 动作 / 时长 / 提示词）","ok");
+   log("场景边界已锁定：竖屏 9:16、单镜头 ≤5s、图先行、480p 预演 / 720p 终稿","wn");
+   save();drawShots();drawShotList();drawReview();render();
+  }
+  function localParse(){
+   state.shots=TEMPLATES.map(function(t){return {scene:t.scene,action:t.action,dur:t.dur,status:"draft",seg:0,drift:false}});
+   finish(false);
+  }
+  if(!state.apiOn){localParse();return}
+  apiState("请求本地工作流中…");
+  callWorkflow({scene:"drama",script:state.script,shot_count:"6",
+                resolution:state.night?"720p 终稿":"480p 预演",
+                anchor_lock:state.anchor?"每镜头 re-anchor（推荐）":"关闭（会产生身份漂移）"},
+   function(o){
+    try{
+     var plan=JSON.parse(o.plan||"{}"),ss=plan.shots||[];
+     if(!ss.length)throw new Error("回包中没有分镜");
+     state.shots=ss.map(function(s){return {scene:s.scene||"中景",action:s.action||"情绪延续",
+       dur:(Number(s.dur)||4)+"s",status:"draft",seg:0,drift:false}});
+     state.anchor=plan.re_anchor!==false;$("anchor").checked=state.anchor;
+     $("risk").style.display=state.anchor?"none":"block";
+     apiState("已接入 · "+(o.engine||"本地模型")+" · 回包 "+ss.length+" 个分镜","ok");
+     log("POST /v1/workflows/run：结构化分镜 "+ss.length+" 个，时长已强制 ≤5s，图先行，cloud_fallback="+(plan.cloud_fallback===true),"ok");
+     var imgs=[];try{imgs=JSON.parse(o.images||"[]")}catch(e2){}
+     imgs.forEach(function(im,i){if(state.shots[i])state.shots[i].img=im.url});
+     if(imgs.length)log((imgs[0].reused?"额度冷却中 · 复用本地已落盘候选 ":"真实关键帧已落盘 ")
+       +imgs.length+" 张（"+(o.engine_mode||"")+" 模式），镜头墙已显示真图","ok");
+     var errs=[];try{errs=JSON.parse(o.images_error||"[]")}catch(e3){}
+     if(errs.length)log("出图未完成："+errs[0]+"（分镜与审片流程不受影响）","wn");
+     finish(true);
+    }catch(e){apiState("回包解析失败，已回退内置分镜","er");log("工作流回包异常："+e.message,"wn");localParse()}
+   },
+   function(e){apiState("未连接本地服务 · 已自动回退内置分镜","er");
+     log("工作流不可达（"+e.message+"）：按端侧策略回退，审片流程不阻塞","wn");localParse()});
+ };
+ $("btnKey").onclick=function(){
+  if(!state.shots.length){log("请先解析分镜","wn");return}
+  state.shots.forEach(function(s,i){if(s.status==="draft"||s.status==="rejected")addTask("关键帧 · 镜头 "+(i+1),"re-anchor / 角色 LoRA / OpenPose",false,"keyframe",i)});
+  log("批量展开关键帧任务，写入队列并落盘分镜 + 锚图参数","ok");save();render();
+ };
+ $("btnRender").onclick=function(){
+  var ok=state.shots.filter(function(s){return s.status==="approved"||s.status==="keyframe"});
+  if(!ok.length){log("还没有可渲染的镜头：先生成关键帧并在审片台点「通过」","wn");return}
+  state.shots.forEach(function(s,i){if(s.status==="approved"||s.status==="keyframe"){s.status="rendering";addTask("I2V 渲染 · 镜头 "+(i+1),"5 帧段 checkpoint / "+(state.night?"夜间批量":"预演档 480p"),false,"video",i)}});
+  log("只对审片通过的 "+ok.length+" 个镜头启动视频渲染（图先行策略）","ok");save();drawShots();render();
+ };
+ $("btnPause").onclick=function(){state.paused=!state.paused;log(state.paused?"队列暂停（当前帧段落盘后停）":"队列继续","wn");save();render()};
+ $("btnInterrupt").onclick=function(){
+  var t=state.tasks.find(function(x){return x.id===state.running});
+  if(!t){log("当前没有运行中的任务","wn");return}
+  t.status="interrupted";t.note="POST /interrupt · 已完成 "+t.seg+"/5 帧段保留";state.running=null;
+  if(typeof t.shot==="number"){var s=state.shots[t.shot];s.status="interrupted";s.seg=t.seg}
+  log("中断镜头：显存释放，已落盘帧段一帧不丢","wn");save();drawShots();render();
+ };
+ $("btnOOM").onclick=function(){
+  var t=state.tasks.find(function(x){return x.id===state.running})||state.tasks.find(function(x){return x.status==="queued"});
+  if(!t){log("队列为空，先生成任务","wn");return}
+  t.status="failed";t.note="OOMError · 需降级后从 checkpoint 续跑";if(state.running===t.id)state.running=null;
+  if(typeof t.shot==="number")state.shots[t.shot].status="failed";
+  log("模拟 OOMError：镜头级失败隔离，其他镜头不受影响","er");save();drawShots();render();
+ };
+ $("btnReset").onclick=function(){state.tasks=[];state.running=null;state.shots.forEach(function(s){if(s.status!=="done"){s.status="draft";s.seg=0}});
+  log("清空队列（剧本 / 锚图 / 审片批注仍保留）","wn");save();drawShots();drawShotList();drawReview();render()};
+ $("apiOn").checked=state.apiOn;
+ $("apiOn").onchange=function(){state.apiOn=this.checked;save();
+   apiState(this.checked?"已开启 · 解析分镜将先走本地 Dify 工作流":"未连接 · 当前使用内置分镜模板");
+   log(this.checked?"开启 API 接入：POST /v1/workflows/run（仅本机回环）":"关闭 API 接入：回到内置分镜模板",this.checked?"ok":"")};
+ $("btnApiTest").onclick=function(){
+  apiState("测试中…");
+  callWorkflow({scene:"drama",script:state.script,shot_count:"2",resolution:"480p 预演",
+                anchor_lock:"每镜头 re-anchor（推荐）",generate_images:"0"},
+   function(o){apiState("已接入 · Dify 工作流可用 · "+(o.engine||"本地模型"),"ok");
+     log("连通性测试通过：/v1/workflows/run → data.outputs.plan（local_only="+(o.local_only===true)+"）","ok")},
+   function(e){apiState("未连接：请先双击「启动本地服务.command」","er");
+     log("连通性测试失败："+e.message+"（不影响原型使用，自动回退）","wn")});
+ };
+}
+load();
+if(!state.shots.length){
+ state.shots=TEMPLATES.map(function(t){return {scene:t.scene,action:t.action,dur:t.dur,status:"draft",seg:0,drift:false}});
+ state.sel=0;save();
+}
+bind();drawShots();drawShotList();drawReview();render();
+log("工作台就绪 · 已载入示例分镜（"+state.shots.length+" 个镜头，可重新解析）");
+log("建议顺序：解析分镜 → 生成关键帧 → 审片通过 / 打回 → 渲染视频 → 中断或模拟失败 → 从 checkpoint 续跑");
+setInterval(tick,470);
+})();
+</script>
+</body>
+</html>

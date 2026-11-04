@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>文档 ② · 场景与用户需求说明｜电商素材工作流</title>
+<style>
+:root{--ink:#1f2937;--ink2:#4b5563;--ink3:#6b7280;--line:#e5e7eb;--bg:#f6f8fb;
+--blue:#1d4ed8;--blue-bg:#eff6ff;--blue-line:#bfdbfe;--teal:#0f766e;--teal-bg:#f0fdfa;
+--amber:#b45309;--amber-bg:#fffbeb;--red:#b91c1c;--red-bg:#fef2f2;--purple:#6d28d9;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+header.hero{background:#fff;border-bottom:1px solid var(--line);border-top:4px solid var(--blue);margin-bottom:28px}
+.hero-in{max-width:1080px;margin:0 auto;padding:30px 24px 26px}
+.kicker{display:inline-block;font-size:12px;letter-spacing:.08em;color:var(--blue);background:var(--blue-bg);
+border:1px solid var(--blue-line);border-radius:99px;padding:3px 12px;margin-bottom:14px}
+h1{font-size:27px;line-height:1.35;margin:0 0 8px;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--ink2);font-size:14px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.meta span{font-size:12px;color:var(--ink2);background:#f3f4f6;border-radius:6px;padding:4px 10px}
+nav.toc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:26px;
+display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:13px;color:var(--ink2);text-decoration:none;padding:5px 11px;border-radius:7px;background:#f9fafb;border:1px solid var(--line)}
+nav.toc a:hover{color:var(--blue);border-color:var(--blue-line);background:var(--blue-bg)}
+section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin-bottom:20px}
+h2{font-size:20px;margin:0 0 16px;font-weight:650;letter-spacing:-.01em;scroll-margin-top:20px}
+h2 .n{display:inline-block;font-size:12px;color:#fff;background:var(--blue);border-radius:6px;
+padding:2px 8px;margin-right:10px;vertical-align:3px;font-weight:500}
+h3{font-size:16px;margin:22px 0 10px;font-weight:650}
+h3:first-of-type{margin-top:4px}
+p{margin:10px 0}
+ul,ol{margin:10px 0;padding-left:22px}
+li{margin:6px 0}
+strong{font-weight:650}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:#f3f4f6;
+border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#9a3412}
+.tw{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:600px}
+th{background:#f8fafc;text-align:left;font-weight:650;color:var(--ink);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #f1f3f5;vertical-align:top;color:var(--ink2)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fafbfc}
+td:first-child{color:var(--ink);font-weight:550}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fcfdfe}
+.card .ct{font-weight:650;font-size:14px;margin-bottom:6px;color:var(--ink)}
+.card .cb{font-size:13px;color:var(--ink2);line-height:1.65}
+.note{border-left:3px solid var(--blue);background:var(--blue-bg);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:14px}
+.note.warm{border-color:var(--amber);background:var(--amber-bg)}
+.note.danger{border-color:var(--red);background:var(--red-bg)}
+.note.good{border-color:var(--teal);background:var(--teal-bg)}
+.note .nt{font-weight:650;margin-bottom:4px;display:block}
+.plain{background:var(--teal-bg);border:1px solid #99f6e4;border-radius:12px;padding:18px 22px;margin:0 0 20px}
+.plain .pt{font-weight:650;color:var(--teal);font-size:14px;margin-bottom:8px}
+.plain p{margin:6px 0;font-size:14.5px}
+.svgbox{overflow-x:auto;margin:18px 0;text-align:center}
+.svgbox svg{max-width:100%;height:auto}
+.tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:5px;margin-right:5px;font-weight:600}
+.tag.b{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-line)}
+.tag.t{background:var(--teal-bg);color:var(--teal);border:1px solid #99f6e4}
+.tag.a{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a}
+.tag.r{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;font-size:13px}
+.flow .step{background:#fff;border:1px solid var(--blue-line);border-radius:8px;padding:8px 12px;color:var(--blue);font-weight:550}
+.flow .arw{color:var(--ink3)}
+footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:28px 0 0;border-top:1px solid var(--line);margin-top:30px}
+.src{font-size:12.5px;color:var(--ink2);line-height:1.9}
+.src a{color:var(--blue);text-decoration:none;word-break:break-all}
+.src a:hover{text-decoration:underline}
+@media(max-width:640px){.wrap{padding:0 14px 50px}.hero-in{padding:22px 14px}section{padding:20px 16px}h1{font-size:22px}}
+@media print{body{background:#fff}nav.toc{display:none}section{break-inside:avoid;box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-in">
+<span class="kicker">套装 A / 文档 2 of 3</span>
+<h1>文档 ② · 场景与用户需求说明｜电商素材工作流</h1>
+<p class="sub">拆解 MVP 核心模块、模块协作关系与端到端工作流；对应 Part 2 第 1 题与 Demo 的功能依据。</p>
+<div class="meta"><span>场景：电商素材工作流</span><span>Part 2-1 对应交付</span><span>含模块协作图</span><span>配套：Demo_视觉创作工作台.html</span></div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a href="#user">01 场景与需求</a><a href="#scope">02 MVP 范围</a><a href="#module">03 核心模块</a><a href="#wf">04 端到端工作流</a><a href="#ui">05 关键页面</a><a href="#accept">06 验收标准</a><a href="#diff">07 与短剧的差异</a><a href="#ask">08 答辩准备</a><a href="#ref">09 参考依据</a></nav>
+<div class="plain"><div class="pt">一页速读</div><p>电商卖家/设计工作室每天要出几十上百张图：同一件商品换场景、换风格、改尺寸，还不能让商品变样。这些活<strong>重复、批量、离线、素材还保密</strong>，正好是端侧最擅长的。MVP 只做一条闭环：导入商品图 → 钉住商品当锚 → 套风格模板 → 批量排队生成 → 在画布上边生成边改 → 一键导出多尺寸。不做什么比做什么更重要：不做视频、不做复杂 3D、不做协作云同步。</p></div><section id="user"><h2><span class="n">01</span>场景与用户需求</h2><h3>用户画像</h3><div class="grid"><div class="card"><div class="ct">电商商家 / 运营</div><div class="cb">上新快、SKU 多，需要主图、场景图、详情图；自己不会写提示词，只想「选个模板、上传商品、出图」。</div></div><div class="card"><div class="ct">小型设计工作室</div><div class="cb">同时服务多个客户，最怕商品被 AI 画变形、LOGO 错位；客户素材不能上传到外部平台。</div></div><div class="card"><div class="ct">内容创作者</div><div class="cb">一次活动要出十几张同风格图，还要 1:1 / 3:4 / 9:16 多平台尺寸，手动改尺寸极其耗时。</div></div></div><h3>Jobs-to-be-Done（用户真正雇这个产品做什么）</h3><div class="tw"><table><thead><tr><th>用户说法</th><th>真实需求</th><th>当前痛点</th></tr></thead><tbody><tr><td>「把这件衣服放到沙滩上」</td><td>主体保持 100% 一致，只换场景与光影</td><td>通用生图会把衣服的花色、领口、LOGO 画变</td></tr><tr><td>「6 个颜色一起出」</td><td>多 SKU 之间只能变颜色，其他完全一致</td><td>逐张生成导致风格漂移，像 6 件不同商品</td></tr><tr><td>「主图、详情、短视频封面都要」</td><td>一次生成，自动派生多尺寸多比例</td><td>手工裁切+重排版，重复劳动</td></tr><tr><td>「客户图不能外传」</td><td>素材与生成全过程留在本地</td><td>云端生图工具存在素材外泄与合规风险</td></tr><tr><td>「今天下班前要」</td><td>批量吞吐可预期，别中途崩掉</td><td>跑到一半失败、草稿丢失、要全部重来</td></tr></tbody></table></div><div class="note good"><span class="nt">为什么这个场景适合端侧（题目的「判断理由」）</span><strong>① 素材保密是刚需</strong>：未上架新品、客户品牌素材不适合上传第三方云端，本地推理天然满足。<br><strong>② 任务可离线、可排队</strong>：批量出图不需要实时交互，适合在后台按队列慢慢跑，把单机算力吃满。<br><strong>③ 图片为主，算力可控</strong>：8 步 Turbo 模型在 24GB 卡上 5–8 秒/张，不像视频生成那样动辄几分钟一个镜头，端侧体验能达标。<br><strong>④ 成本结构合理</strong>：高频、重复的批量任务摊薄硬件成本；不像偶发任务那样用云更划算。<br><strong>⑤ 产物可复现</strong>：seed + 参数 + 锚图全部本地存档，客户要「再出一张一样的」随时能重放。</div></section><section id="scope"><h2><span class="n">02</span>MVP 范围：先做一条能交货的闭环</h2><div class="grid"><div class="card"><div class="ct">MVP 做</div><div class="cb">① 单商品图导入与自动抠图<br>② 商品锚图 + 一致性控制<br>③ 风格 / 场景模板（内置 6 套）<br>④ 批量任务编排（多 SKU × 多尺寸）<br>⑤ 画布编辑（局部重绘、改词、换背景）<br>⑥ 多尺寸导出与上架前校验<br>⑦ 草稿自动保存与队列恢复</div></div><div class="card"><div class="ct">MVP 明确不做</div><div class="cb">× 视频生成（交给另一套场景方案）<br>× 多人实时协作 / 云同步<br>× 自定义模型训练界面<br>× 复杂 3D 建模与材质<br>× 无限并发（单卡物理上限，不承诺）<br>× 任何需要联网的功能</div></div></div><div class="note warm"><span class="nt">范围判断的依据</span>MVP 的取舍标准是「能不能独立完成一次完整交货」，而不是功能多。少一个模块就交不了货的，必须做；只是锦上添花的，一律后置。</div></section><section id="module"><h2><span class="n">03</span>核心模块拆解：每个模块解决什么问题、怎么协作</h2><div class="tw"><table><thead><tr><th>#</th><th>模块</th><th>解决什么问题</th><th>输入 → 输出</th><th>依赖 / 下游</th></tr></thead><tbody><tr><td>M1</td><td>商品资产库</td><td>把散落的商品图、SKU 表、品牌规范集中管理，避免每次重传；也解决「素材不出本地」</td><td>商品图 + SKU 清单 → 结构化商品对象（含锚图）</td><td>为 M2 提供锚图；为 M4 提供批量清单</td></tr><tr><td>M2</td><td>一致性引擎</td><td><strong>本场景最关键</strong>：保证商品不变形、多 SKU 之间只变该变的东西</td><td>锚图 + 目标风格 → 带 IP-Adapter / LoRA 约束的工作流参数</td><td>输出给 M4 编排；M5 改图时复用同一锚</td></tr><tr><td>M3</td><td>模板与提示词中心</td><td>用户不会写提示词；把风格、场景、光影、平台尺寸沉淀成可复用模板</td><td>模板选择 + 少量填空 → 结构化 prompt + 参数组</td><td>为 M4 提供参数；模板本身可版本化</td></tr><tr><td>M4</td><td>批量任务编排</td><td>把「6 色 × 3 尺寸」展开成任务 DAG，处理排队、优先级、模型切换、失败重试</td><td>商品清单 × 模板 → 有序任务队列</td><td>调用本地推理 API；向 M6 回报状态</td></tr><tr><td>M5</td><td>画布编辑器</td><td>「边生成边编辑」：用户在批量跑的同时挑图、局部重绘、改一句话重出</td><td>已出图 + 用户编辑 → 增量任务（只重跑改动部分）</td><td>增量任务插回 M4，优先级高于后台批量</td></tr><tr><td>M6</td><td>导出与交付校验</td><td>自动派生 1:1 / 3:4 / 9:16，检查尺寸、文字错漏、商品一致性，打包交付</td><td>成品图 → 多尺寸文件包 + 校验报告</td><td>消费 M4/M5 产物；写回资产库存档</td></tr><tr><td>M7</td><td>草稿与恢复中心</td><td>横切模块：草稿、参数、产物三层落盘；崩溃后重建队列</td><td>所有编辑与任务状态 → 本地持久化快照</td><td>被 M1–M6 共同调用（详见文档 ③）</td></tr></tbody></table></div><div class="svgbox"><svg viewBox="0 0 680 300" width="100%" role="img" xmlns="http://www.w3.org/2000/svg"><title>电商素材工作台模块协作图</title><desc>资产库提供锚图，一致性引擎与模板中心生成参数，批量编排调用本地推理，画布编辑增量回插队列，导出校验收口，草稿中心横切全部模块。</desc><rect x="20" y="20" width="640" height="260" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.5"/><text x="36" y="42" font-size="12" fill="#64748b" font-family="system-ui">端侧 AI 主机 · 离线边界内</text><rect x="36" y="62" width="130" height="54" rx="9" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/><rect x="186" y="62" width="130" height="54" rx="9" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/><rect x="336" y="62" width="130" height="54" rx="9" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/><rect x="486" y="62" width="158" height="54" rx="9" fill="#f0fdfa" stroke="#5eead4" stroke-width="0.5"/><rect x="36" y="150" width="130" height="54" rx="9" fill="#f0fdfa" stroke="#5eead4" stroke-width="0.5"/><rect x="186" y="150" width="130" height="54" rx="9" fill="#fffbeb" stroke="#fcd34d" stroke-width="0.5"/><rect x="336" y="150" width="130" height="54" rx="9" fill="#f0fdfa" stroke="#5eead4" stroke-width="0.5"/><rect x="486" y="150" width="158" height="54" rx="9" fill="#f0fdfa" stroke="#5eead4" stroke-width="0.5"/><text x="101" y="84" text-anchor="middle" font-size="13" font-weight="600" fill="#1e40af" font-family="system-ui">M1 商品资产库</text><text x="101" y="102" text-anchor="middle" font-size="11" fill="#1d4ed8" font-family="system-ui">锚图 / SKU 清单</text><text x="251" y="84" text-anchor="middle" font-size="13" font-weight="600" fill="#1e40af" font-family="system-ui">M2 一致性引擎</text><text x="251" y="102" text-anchor="middle" font-size="11" fill="#1d4ed8" font-family="system-ui">钉住商品主体</text><text x="401" y="84" text-anchor="middle" font-size="13" font-weight="600" fill="#1e40af" font-family="system-ui">M3 模板中心</text><text x="401" y="102" text-anchor="middle" font-size="11" fill="#1d4ed8" font-family="system-ui">风格 / 尺寸</text><text x="565" y="84" text-anchor="middle" font-size="13" font-weight="600" fill="#115e59" font-family="system-ui">本地推理 API</text><text x="565" y="102" text-anchor="middle" font-size="11" fill="#0f766e" font-family="system-ui">ComfyUI /prompt</text><text x="101" y="172" text-anchor="middle" font-size="13" font-weight="600" fill="#115e59" font-family="system-ui">M4 批量编排</text><text x="101" y="190" text-anchor="middle" font-size="11" fill="#0f766e" font-family="system-ui">队列 / 优先级</text><text x="251" y="172" text-anchor="middle" font-size="13" font-weight="600" fill="#92400e" font-family="system-ui">M5 画布编辑</text><text x="251" y="190" text-anchor="middle" font-size="11" fill="#b45309" font-family="system-ui">边生成边改</text><text x="401" y="172" text-anchor="middle" font-size="13" font-weight="600" fill="#115e59" font-family="system-ui">M6 导出校验</text><text x="401" y="190" text-anchor="middle" font-size="11" fill="#0f766e" font-family="system-ui">多尺寸交付</text><text x="565" y="172" text-anchor="middle" font-size="13" font-weight="600" fill="#115e59" font-family="system-ui">M7 草稿中心</text><text x="565" y="190" text-anchor="middle" font-size="11" fill="#0f766e" font-family="system-ui">横切 · 不丢稿</text><path d="M166 89 L182 89 M316 89 L332 89 M466 89 L482 89" fill="none" stroke="#94a3b8" stroke-width="1.5"/><path d="M565 120 L565 140 L101 140 L101 148" fill="none" stroke="#94a3b8" stroke-width="1.5"/><path d="M166 177 L182 177 M316 177 L332 177 M466 177 L482 177" fill="none" stroke="#94a3b8" stroke-width="1.5"/><path d="M251 148 L251 158" fill="none" stroke="#f59e0b" stroke-width="1.5"/><text x="36" y="238" font-size="12" fill="#475569" font-family="system-ui">主线：锚图 + 模板 → 参数 → 队列 → 本地推理 → 画布 → 导出；M5 的改动以高优先级增量任务回插 M4。</text><text x="36" y="258" font-size="12" fill="#475569" font-family="system-ui">M7 横切所有模块：任何编辑、参数、产物都即时落盘，进程崩溃后可重建队列。</text></svg></div><div class="note good"><span class="nt">模块协作的一条核心设计</span>M5 画布编辑<strong>不直接调模型</strong>，而是生成「增量任务」回插 M4，并给更高优先级。这样只用一套队列、一套显存账，用户改一张图不会和后台批量抢 GPU。</div></section><section id="wf"><h2><span class="n">04</span>端到端工作流（对应 Demo 里能点的每一步）</h2><div class="flow"><span class="step">导入商品图</span><span class="arw">&rarr;</span><span class="step">自动抠图 / 设锚</span><span class="arw">&rarr;</span><span class="step">选风格模板</span><span class="arw">&rarr;</span><span class="step">展开 SKU × 尺寸</span><span class="arw">&rarr;</span><span class="step">批量排队</span><span class="arw">&rarr;</span><span class="step">本地生成</span><span class="arw">&rarr;</span><span class="step">画布挑图改图</span><span class="arw">&rarr;</span><span class="step">导出校验</span></div><div class="tw"><table><thead><tr><th>步骤</th><th>用户动作</th><th>系统动作</th><th>状态落盘</th></tr></thead><tbody><tr><td>1</td><td>拖入商品图 / SKU 表</td><td>抠图、生成锚图、写入资产库</td><td>锚图 + 原始图哈希</td></tr><tr><td>2</td><td>选场景与风格模板</td><td>加载模板，生成结构化 prompt 与参数组</td><td>模板版本号 + 参数快照</td></tr><tr><td>3</td><td>勾选 6 色 × 3 尺寸</td><td>展开为 18 个任务，写入队列（含 seed）</td><td>workflow_api.json + 任务清单</td></tr><tr><td>4</td><td>点「开始批量」</td><td>单卡串行执行；前台编辑可插入高优先级任务</td><td>每个任务的状态与进度</td></tr><tr><td>5</td><td>边跑边在画布挑图</td><td>对不满意的图局部重绘 / 改词，生成增量任务</td><td>增量任务 + 编辑历史</td></tr><tr><td>6</td><td>一键导出</td><td>派生多尺寸、跑一致性/文字校验、打包</td><td>成品 + 校验报告 + 复现包</td></tr></tbody></table></div></section><section id="ui"><h2><span class="n">05</span>关键页面与交互说明（Demo 的对应关系）</h2><div class="tw"><table><thead><tr><th>页面区域</th><th>关键交互</th><th>要体现的产品决策</th></tr></thead><tbody><tr><td>左：商品与 SKU 列表</td><td>点选 SKU，画布切换；显示锚图锁定标记</td><td>锚图是全局唯一真相源，任何生成都 re-anchor 到它</td></tr><tr><td>中：画布</td><td>切换候选图、局部涂抹重绘、改提示词重出</td><td>「边生成边编辑」；编辑产生高优先级增量任务</td></tr><tr><td>右：参数面板</td><td>风格、场景、尺寸、候选数、质量档位</td><td>默认快速档（保速度），精修档需显式开启并提示耗时</td></tr><tr><td>底：任务队列</td><td>进度条、暂停、中断、模拟失败、一键恢复</td><td>队列状态机与失败恢复（文档 ③ 的可视化）</td></tr><tr><td>顶：算力条</td><td>显存占用随任务数变化，超阈值触发降级提示</td><td>端侧资源是全局共享的，必须对用户可见</td></tr><tr><td>全局：自动存稿灯</td><td>刷新页面后草稿、参数、队列仍在</td><td>三层持久化，不丢稿</td></tr></tbody></table></div><div class="note warm"><span class="nt">为什么把「算力占用」放在界面上</span>云端产品可以隐藏资源，端侧不行。用户必须知道「为什么变慢了 / 为什么队列停了」，否则会把降级误判为软件坏了。这是端侧产品特有的透明度设计。</div></section><section id="accept"><h2><span class="n">06</span>MVP 验收标准</h2><div class="tw"><table><thead><tr><th>验收项</th><th>标准</th></tr></thead><tbody><tr><td>闭环完整</td><td>从导入一张商品图到导出多尺寸文件包，全程不依赖任何联网操作</td></tr><tr><td>一致性</td><td>6 色 SKU 盲测「是否同一商品」均值 ≥ 4.2；LOGO / 形状零错误</td></tr><tr><td>批量效率</td><td>18 张任务 ≤ 3 分钟完成，中途可编辑、可中断、可恢复</td></tr><tr><td>不丢稿</td><td>强制结束进程后重启，草稿与队列 100% 还原</td></tr><tr><td>可复现</td><td>任一张成品可用存档的 seed + 参数重出同一张图</td></tr></tbody></table></div></section><section id="diff"><h2><span class="n">07</span>与短剧场景的差异（为什么两套方案不能合并写）</h2><div class="tw"><table><thead><tr><th>维度</th><th>电商素材</th><th>短剧自动化</th></tr></thead><tbody><tr><td>产物</td><td>静态图，秒级单张</td><td>视频镜头，分钟级单段</td></tr><tr><td>算力瓶颈</td><td>显存余量与模型切换</td><td>显存带宽、系统内存、磁盘帧缓存</td></tr><tr><td>一致性对象</td><td>商品本体（形状 / LOGO / 配色）</td><td>人物身份 + 服装 + 跨镜头场景</td></tr><tr><td>失败代价</td><td>重跑一张，成本低</td><td>重跑一个镜头要几分钟，必须按镜头 checkpoint</td></tr><tr><td>并发策略</td><td>短任务高频排队</td><td>长任务分段、夜间批量、断点续跑</td></tr></tbody></table></div><p>正因为这些差异，模型选型、模块划分、并发策略都要各自成篇——这也是把两套交付分开做的原因。</p></section><section id="ask"><h2><span class="n">08</span>老师可能追问什么</h2><div class="grid"><div class="card"><div class="ct">「为什么不用最强的 FLUX.2？」</div><div class="cb">两个硬理由：社区许可非商用（电商/短剧都是要交货的），且 32B 模型 33.8GB 超出 24GB 显存，offload 后单张要几分钟，端侧批量不现实。</div></div><div class="card"><div class="ct">「没有云端兜底，慢了怎么办？」</div><div class="cb">答降级阶梯：降分辨率 → 减步数 → 卸载大模型 → 暂停后台保前台 → 明确拒绝并提示。绝不静默失败，也绝不偷调云 API。</div></div><div class="card"><div class="ct">「主观效果怎么算评估？」</div><div class="cb">答盲测 + 5 分制评分表 + 多人取均值 + 锚图 A/B + 固定 seed 可复现。主观维度也要可操作、可复议。</div></div><div class="card"><div class="ct">「并发不就是把任务排队吗？」</div><div class="cb">答四层：状态机、优先级与配额、按错误类型分类恢复、三层持久化（草稿 / 参数 / 产物）。排队只是第一层。</div></div></div></section><section id="ref"><h2><span class="n">09</span>参考依据</h2><h3>参考依据（真实开源项目与公开资料，2026-11 核实）</h3>
+<div class="src">
+1. <a href="https://github.com/comfyanonymous/ComfyUI">comfyanonymous/ComfyUI</a> — 节点式工作流、可导出 API JSON、原生任务队列，是本方案的运行框架。<br>
+2. <a href="https://github.com/city96/ComfyUI-GGUF">city96/ComfyUI-GGUF</a> — 加载 GGUF 量化权重，提供 <code>Unet Loader (GGUF)</code> 等节点。<br>
+3. <a href="https://docs.comfy.org/zh-CN/development/cloud/api-reference">ComfyUI 官方 API 参考</a> — <code>/prompt</code>、<code>/queue</code>、<code>/interrupt</code>、<code>/history</code>、<code>/system_stats</code>，以及 <code>execution_error</code> 中的 <code>OOMError</code> 等异常类型。<br>
+4. <a href="https://github.com/Wan-Video/Wan2.2">Wan-Video/Wan2.2</a>（Apache 2.0）、<a href="https://github.com/Lightricks/LTX-Video">Lightricks/LTX-Video</a> — 本地视频生成主力与轻量备选。<br>
+5. <a href="https://github.com/QwenLM/Qwen-Image">QwenLM/Qwen-Image</a>、<a href="https://github.com/Tongyi-MAI/Z-Image">Tongyi-MAI/Z-Image</a> — Apache 2.0 可商用的图像模型。<br>
+6. <a href="https://github.com/tencent-ailab/IP-Adapter">tencent-ailab/IP-Adapter</a>、<a href="https://github.com/InstantX/InstantID">InstantX/InstantID</a> — 一致性方案；注意 InstantID / PuLID 依赖的 InsightFace 权重为非商用研究许可。<br>
+7. <a href="https://github.com/lllyasviel/FramePack">lllyasviel/FramePack</a> — 低显存长视频思路。<br>
+8. 显存与速度实测：<a href="https://devpress.csdn.net/awstech/6a463080662f9a54cb87d0e6.html">RTX 4090 本地部署 FLUX.2 / Qwen-Image / Z-Image 对比（2026）</a>；<a href="https://hypeart.ai/glossary/local-ai-video-generator">Local AI Video Generator 2026</a>；<a href="https://willitrunai.com/blog/video-generation-gpu-guide-2026">Video Generation VRAM Guide 2026</a>。
+</div>
+<div class="note warm"><span class="nt">关于版本</span>模型与量化版本迭代很快，文中数字是<strong>选型测算的工程量级</strong>，不是承诺的实测跑分；真机落地前需用固定 seed 与固定提示词集重测一遍。</div></section>
+<footer>端侧 AI Studio · AI 产品测试题作业交付 · 全部推理在本地完成，无云端兜底<br>生成日期：2026-11-04</footer>
+</div>
+</body>
+</html>

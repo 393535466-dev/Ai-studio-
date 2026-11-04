@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo · 视觉创作工作台｜电商素材工作流</title>
+<style>
+:root{--ink:#1f2937;--ink2:#4b5563;--ink3:#6b7280;--line:#e5e7eb;--bg:#f4f6fa;
+--blue:#1d4ed8;--blue2:#eff6ff;--bluel:#bfdbfe;--teal:#0f766e;--teal2:#f0fdfa;
+--amber:#b45309;--amber2:#fffbeb;--red:#b91c1c;--red2:#fef2f2;--green:#15803d;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.6}
+button,select,input,textarea{font-family:inherit;font-size:13px}
+button{cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:7px 12px;transition:.15s}
+button:hover{border-color:var(--blue);color:var(--blue)}
+button.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+button.primary:hover{background:#1e40af;color:#fff}
+button.warn{border-color:#fca5a5;color:var(--red);background:var(--red2)}
+button.ghost{background:transparent}
+button:disabled{opacity:.42;cursor:not-allowed}
+button:disabled:hover{border-color:var(--line);color:var(--ink)}
+.top{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:16px;letter-spacing:-.02em}
+.brand small{font-weight:400;color:var(--ink3);font-size:12px;margin-left:8px}
+.badge{font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--teal2);color:var(--teal);border:1px solid #99f6e4}
+.top .spacer{flex:1}
+.link{font-size:12.5px;color:var(--blue);text-decoration:none;padding:5px 10px;border:1px solid var(--bluel);border-radius:8px;background:var(--blue2)}
+.link:hover{background:#dbeafe}
+.power{background:#fff;border-bottom:1px solid var(--line);padding:9px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+.bar{width:150px;height:7px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .35s}
+.bar.hot>i{background:var(--amber)}
+.lvl{font-weight:600;color:var(--teal)}
+.lvl.hot{color:var(--amber)}
+.app{display:grid;grid-template-columns:210px minmax(0,1fr) 250px;gap:14px;padding:14px 20px;max-width:1440px;margin:0 auto}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.panel h3{margin:0 0 10px;font-size:13px;font-weight:700;color:var(--ink2);letter-spacing:.02em}
+.side{max-height:600px;overflow:auto}
+.sku{display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;cursor:pointer}
+.sku:hover{border-color:var(--bluel)}
+.sku.on{border-color:var(--blue);background:var(--blue2)}
+.dot{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.12);flex:none}
+.sku .nm{font-size:12.5px;font-weight:600}
+.sku .id{font-size:11px;color:var(--ink3)}
+.anchor{margin-top:12px;background:var(--teal2);border:1px solid #99f6e4;border-radius:9px;padding:10px;font-size:12px;color:var(--teal)}
+.canvas{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:11px;min-height:330px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.canvas .stage{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:16px}
+.canvas .hint{position:absolute;left:12px;top:10px;font-size:11.5px;color:var(--ink3);background:rgba(255,255,255,.85);padding:3px 8px;border-radius:6px}
+.canvas .stamp{position:absolute;right:12px;bottom:10px;font-size:11px;color:#fff;background:rgba(15,118,110,.85);padding:4px 9px;border-radius:6px}
+.thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.thumb{width:64px;height:64px;border-radius:8px;border:1px solid var(--line);overflow:hidden;background:#fff;cursor:pointer;position:relative}
+.thumb.on{border:2px solid var(--blue)}
+.thumb svg{width:100%;height:100%}
+.thumb span{position:absolute;right:2px;bottom:1px;font-size:9px;color:var(--ink3);background:rgba(255,255,255,.8);border-radius:3px;padding:0 2px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:11.5px;color:var(--ink3);margin-bottom:4px}
+.field select,.field input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:9px 0}
+.toggle input{width:auto}
+.quick{background:var(--blue2);border:1px solid var(--bluel);border-radius:9px;padding:10px;font-size:12px;color:#1e40af;margin-top:10px}
+.queue{max-width:1440px;margin:0 auto;padding:0 20px 30px}
+.qhead{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+.qhead h3{margin:0;font-size:14px;font-weight:700}
+.qhead .spacer{flex:1}
+.task{display:grid;grid-template-columns:150px 1fr 118px 96px;gap:10px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:#fff;font-size:12.5px}
+.task .tname{font-weight:600}
+.task .tsub{font-size:11px;color:var(--ink3)}
+.pbar{height:7px;background:#eef0f4;border-radius:99px;overflow:hidden}
+.pbar>i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .25s}
+.st{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;text-align:center;white-space:nowrap}
+.st.queued{background:#f1f5f9;color:#475569}
+.st.running{background:var(--amber2);color:var(--amber)}
+.st.succeeded{background:#f0fdf4;color:var(--green)}
+.st.failed{background:var(--red2);color:var(--red)}
+.st.interrupted{background:#f5f3ff;color:#6d28d9}
+.st.resumable{background:var(--teal2);color:var(--teal)}
+.tact{display:flex;gap:4px;justify-content:flex-end}
+.tact button{padding:3px 7px;font-size:11px;border-radius:6px}
+.log{background:#0f172a;color:#cbd5e1;border-radius:10px;padding:11px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.7;max-height:130px;overflow:auto;margin-top:10px}
+.log .ok{color:#86efac}.log .er{color:#fca5a5}.log .wn{color:#fcd34d}
+.foot{text-align:center;color:var(--ink3);font-size:12px;padding:0 20px 26px}
+@media(max-width:980px){.app{grid-template-columns:1fr}.side{max-height:none}.task{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand">AI Studio <small>视觉创作工作台 · 电商素材工作流</small></div>
+  <span class="badge" id="modeBadge">离线 · 全部推理在本地</span>
+  <div class="spacer"></div>
+  <a class="link" href="../index.html">交付总览</a>
+  <a class="link" href="../02_短剧自动化工作流/Demo_视觉创作工作台.html">切换：短剧自动化 &rarr;</a>
+</div>
+
+<div class="power">
+  <span>显存</span>
+  <div class="bar" id="vbar"><i id="vfill" style="width:38%"></i></div>
+  <span id="vtxt">9.2 / 24 GB</span>
+  <span>执行槽</span><strong id="slot">0 / 1</strong>
+  <span>队列</span><strong id="qcount">0</strong>
+  <span>降级级别</span><span class="lvl" id="lvl">L0 正常</span>
+  <div class="spacer" style="flex:1"></div>
+  <span id="save">自动存稿 · 已就绪</span>
+</div>
+
+<div class="app">
+  <div class="panel side">
+    <h3>商品资产库 / SKU</h3>
+    <div id="skuList"></div>
+    <div class="anchor"><strong>锚图已锁定</strong><br>所有生成都回到这张原始商品图，避免多 SKU 越画越不像。</div>
+  </div>
+
+  <div class="panel">
+    <h3>画布 <span style="font-weight:400;color:var(--ink3);font-size:11.5px">— 生成中的同时可以继续挑图、改词</span></h3>
+    <div class="canvas">
+      <div class="hint" id="canvasHint">预览 · 1024 × 1024</div>
+      <div class="stage" id="stage"></div>
+      <div class="stamp">主体保真 · re-anchor</div>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button id="btnEdit">局部重绘（插入 P0 任务）</button>
+      <button id="btnClearCanvas">清除候选</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>生成参数</h3>
+    <div class="field"><label>场景 / 风格模板</label>
+      <select id="style"><option>极简白棚</option><option>暖调生活场景</option><option>户外自然光</option><option>节日促销</option></select></div>
+    <div class="field"><label>输出尺寸</label>
+      <select id="size"><option>1:1 主图</option><option>3:4 详情图</option><option>9:16 封面</option></select></div>
+    <div class="field"><label>每个 SKU 候选数</label>
+      <select id="count"><option>2</option><option selected>4</option><option>6</option></select></div>
+    <div class="field"><label>批量范围</label>
+      <select id="scope"><option value="1">仅当前 SKU</option><option value="3">前 3 个 SKU</option><option value="6" selected>全部 6 个 SKU</option></select></div>
+    <label class="toggle"><input type="checkbox" id="fine"> 精修模式（中文主图 · 独占显存）</label>
+    <button class="primary" id="btnGen" style="width:100%;margin-top:6px">批量生成</button>
+    <div class="quick" id="quick">默认快速档：Z-Image-Turbo Q5 · 8 步 · 约 5–8 秒/张。<br>勾选精修会切换 Qwen-Image fp8 并暂停后台队列。</div>
+    <div class="quick" style="margin-top:10px;border-top:1px dashed var(--line);padding-top:9px">
+      <label class="toggle"><input type="checkbox" id="apiOn"> 接入本地 Dify 工作流（127.0.0.1:8765）</label>
+      <div id="apiState" style="font-size:11.5px;color:var(--ink3);margin:5px 0 7px">未连接 · 当前使用内置模拟编排</div>
+      <button id="btnApiTest" style="width:100%">测试工作流连接</button>
+    </div>
+  </div>
+</div>
+
+<div class="queue">
+  <div class="panel">
+    <div class="qhead">
+      <h3>任务队列 <span style="font-weight:400;color:var(--ink3);font-size:11.5px">单卡串行 · P0 前台编辑优先</span></h3>
+      <div class="spacer"></div>
+      <button id="btnPause">暂停队列</button>
+      <button id="btnInterrupt" class="warn">中断当前</button>
+      <button id="btnOOM">模拟 OOM</button>
+      <button id="btnReset">清空队列</button>
+    </div>
+    <div id="tasks"></div>
+    <div class="log" id="log"></div>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--ink3)">
+      刷新页面试试：草稿、参数、队列都会还原（本地持久化）。中断 / 失败后点任务右侧「恢复」即可从 checkpoint 续跑。
+    </div>
+  </div>
+</div>
+
+<div class="foot">端侧 AI Studio 交互原型 · 电商素材工作流 · 默认内置模拟编排；勾选后可接入本机 127.0.0.1:8765 的 Dify 工作流，全程不出网、无云端兜底</div>
+
+<script>
+(function(){
+"use strict";
+var KEY="aistudio_ecom_demo_v1";
+var SKUS=[
+ {id:"SKU-01",name:"雾白",c:"#e8e6e1"},{id:"SKU-02",name:"炭黑",c:"#3f444b"},
+ {id:"SKU-03",name:"雾霾蓝",c:"#7d9bb5"},{id:"SKU-04",name:"落日橘",c:"#d98757"},
+ {id:"SKU-05",name:"松绿",c:"#5b8b76"},{id:"SKU-06",name:"藕粉",c:"#d9a8ae"}
+];
+var BG={"极简白棚":["#f7f7f5","#e6e7e5"],"暖调生活场景":["#f8ecd9","#e8cfae"],
+        "户外自然光":["#dbeaf0","#b7d3c4"],"节日促销":["#f7e2e2","#e8b9b9"]};
+var $=function(id){return document.getElementById(id)};
+var API_BASE="http://127.0.0.1:8765";
+var state={sku:0,style:"极简白棚",size:"1:1 主图",count:4,scope:6,fine:false,apiOn:false,
+           tasks:[],cands:[],paused:false,seq:0,running:null,heroImg:null};
+function esc(u){return String(u||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+function apiState(txt,kind){
+  $("apiState").textContent=txt;
+  $("apiState").style.color=kind==="ok"?"#0f766e":(kind==="er"?"#b91c1c":"#6b7280");
+}
+function setMode(o){
+ var b=$("modeBadge");if(!b)return;
+ if(o&&o.dev_only===true){
+  b.textContent="DEV ONLY · 联网演示模式";
+  b.style.background="#fffbeb";b.style.color="#b45309";b.style.borderColor="#fde68a";
+ }else{
+  b.textContent="离线 · 全部推理在本地";
+  b.style.background="";b.style.color="";b.style.borderColor="";
+ }
+}
+function callWorkflow(inputs,onOk,onFail){
+  fetch(API_BASE+"/v1/workflows/run",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({inputs:inputs,response_mode:"blocking",user:"studio-local"})})
+   .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json()})
+   .then(function(j){var o=(j.data&&j.data.outputs)||{};setMode(o);onOk(o)})
+   .catch(function(e){onFail(e)});
+}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$("save").textContent="自动存稿 · "+new Date().toLocaleTimeString("zh-CN",{hour12:false})}catch(e){$("save").textContent="自动存稿 · 不可用"}}
+function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&s.tasks){state=Object.assign(state,s);if(state.running){state.tasks.forEach(function(t){if(t.status==="running")t.status="resumable"});state.running=null;}}}catch(e){}}
+function log(msg,kind){var d=document.createElement("div");d.className=kind||"";d.textContent="["+new Date().toLocaleTimeString("zh-CN",{hour12:false})+"] "+msg;$("log").appendChild(d);$("log").scrollTop=$("log").scrollHeight;}
+function productSVG(color,bgA,bgB,small){
+ var id="g"+Math.random().toString(36).slice(2,7);
+ return '<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg">'
+ +'<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+bgA+'"/><stop offset="1" stop-color="'+bgB+'"/></linearGradient></defs>'
+ +'<rect width="240" height="300" fill="url(#'+id+')"/>'
+ +'<ellipse cx="120" cy="266" rx="82" ry="12" fill="rgba(0,0,0,.09)"/>'
+ +'<rect x="99" y="34" width="42" height="20" rx="4" fill="#4b5563"/>'
+ +'<rect x="105" y="52" width="30" height="26" rx="3" fill="#c9cdd2"/>'
+ +'<rect x="62" y="76" width="116" height="184" rx="20" fill="'+color+'" stroke="rgba(0,0,0,.10)"/>'
+ +'<rect x="78" y="136" width="84" height="56" rx="6" fill="rgba(255,255,255,.82)"/>'
+ +'<rect x="92" y="150" width="56" height="5" rx="2" fill="rgba(0,0,0,.22)"/>'
+ +'<rect x="92" y="162" width="38" height="4" rx="2" fill="rgba(0,0,0,.13)"/>'
+ +(small?'':'<text x="120" y="292" text-anchor="middle" font-size="10" fill="rgba(0,0,0,.35)" font-family="sans-serif">商品锚图 · 主体锁定</text>')
+ +'</svg>';
+}
+function drawStage(){
+ var s=SKUS[state.sku],b=BG[state.style]||BG["极简白棚"];
+ var inner=state.heroImg
+   ? '<img src="'+esc(state.heroImg)+'" alt="真实生成图" style="width:100%;display:block" onerror="this.style.display=\'none\'">'
+   : productSVG(s.c,b[0],b[1],false);
+ $("stage").innerHTML='<div style="width:230px;max-width:100%;border-radius:12px;overflow:hidden;box-shadow:0 6px 22px rgba(15,23,42,.13)">'+inner+'</div>';
+ $("canvasHint").textContent=(state.heroImg?"真实生成图 · ":"预览 · ")+state.size+" · "+s.name;
+}
+function drawSkus(){
+ $("skuList").innerHTML=SKUS.map(function(s,i){return '<div class="sku'+(i===state.sku?' on':'')+'" data-i="'+i+'"><span class="dot" style="background:'+s.c+'"></span><div><div class="nm">'+s.name+'</div><div class="id">'+s.id+'</div></div></div>'}).join("");
+ Array.prototype.forEach.call(document.querySelectorAll(".sku"),function(el){el.onclick=function(){state.sku=+el.dataset.i;drawSkus();drawStage();save();log("切换 SKU → "+SKUS[state.sku].name)}});
+}
+function drawThumbs(){
+ var s=SKUS[state.sku],b=BG[state.style]||BG["极简白棚"];
+ if(!state.cands.length){$("thumbs").innerHTML='<span style="font-size:12px;color:var(--ink3)">还没有候选图，点右侧「批量生成」开始</span>';return}
+ $("thumbs").innerHTML=state.cands.map(function(c,i){
+  var pic=c.img
+    ? '<img src="'+esc(c.img)+'" alt="候选 '+(i+1)+'" style="width:100%;height:100%;object-fit:cover;display:block">'
+    : productSVG(c.color,b[0],b[1],true);
+  return '<div class="thumb" data-i="'+i+'" title="候选 '+(i+1)+'">'+pic+'<span>'+(i+1)+'</span></div>';
+ }).join("");
+}
+function memUsed(){
+ var n=state.tasks.filter(function(t){return t.status==="running"}).length;
+ var base=state.fine?19.4:9.2;
+ return Math.min(23.6,base+n*2.1+(state.tasks.filter(function(t){return t.status==="queued"}).length)*0.12);
+}
+function render(){
+ var m=memUsed(),hot=m>18;
+ $("vfill").style.width=(m/24*100).toFixed(1)+"%";
+ $("vbar").className="bar"+(hot?" hot":"");
+ $("vtxt").textContent=m.toFixed(1)+" / 24 GB";
+ $("slot").textContent=(state.running?1:0)+" / 1";
+ $("qcount").textContent=state.tasks.filter(function(t){return t.status==="queued"||t.status==="running"}).length;
+ $("lvl").textContent=hot?"L1 已自动降分辨率":"L0 正常";
+ $("lvl").className="lvl"+(hot?" hot":"");
+ $("btnPause").textContent=state.paused?"继续队列":"暂停队列";
+ var html=state.tasks.map(function(t){
+  var act="";
+  if(t.status==="failed")act='<button data-a="recover" data-id="'+t.id+'">降级重试</button>';
+  else if(t.status==="interrupted"||t.status==="resumable")act='<button data-a="recover" data-id="'+t.id+'">恢复</button>';
+  else if(t.status==="queued")act='<button data-a="cancel" data-id="'+t.id+'">取消</button>';
+  else if(t.status==="succeeded")act='<button data-a="view" data-id="'+t.id+'">查看</button>';
+  return '<div class="task"><div><div class="tname">'+t.name+'</div><div class="tsub">'+t.sub+'</div></div>'
+   +'<div><div class="pbar"><i style="width:'+t.progress+'%"></i></div><div class="tsub" style="margin-top:3px">'+t.note+'</div></div>'
+   +'<div class="st '+t.status+'">'+label(t.status)+'</div><div class="tact">'+act+'</div></div>';
+ }).join("");
+ $("tasks").innerHTML=html||'<div style="color:var(--ink3);font-size:12.5px;padding:8px">队列为空。选择 SKU 与模板后点「批量生成」。</div>';
+ Array.prototype.forEach.call(document.querySelectorAll("[data-a]"),function(b){b.onclick=function(){action(b.dataset.a,+b.dataset.id)}});
+}
+function label(s){return {queued:"排队中",running:"生成中",succeeded:"已完成",failed:"失败",interrupted:"已中断",resumable:"可恢复",cancelled:"已取消"}[s]||s}
+function addTask(name,sub,prio,count){
+ var t={id:++state.seq,name:name,sub:sub,status:"queued",progress:0,checkpoint:0,
+        note:prio?"P0 前台增量 · 参数已快照":"参数快照锁定 · seed "+(1000+state.seq*37),
+        color:SKUS[state.sku].c,count:count||state.count,prio:!!prio};
+ if(prio){var idx=state.tasks.findIndex(function(x){return x.status==="queued"&&!x.prio});if(idx<0)idx=state.tasks.length;state.tasks.splice(idx,0,t)}
+ else state.tasks.push(t);
+ return t;
+}
+function action(a,id){
+ var t=state.tasks.find(function(x){return x.id===id});if(!t)return;
+ if(a==="cancel"){t.status="cancelled";t.note="已从待执行列表移除（POST /queue delete）";log("取消排队任务 #"+id,"wn")}
+ if(a==="view"){state.cands=[{color:t.color},{color:t.color},{color:t.color}];drawThumbs();log("载入任务 #"+id+" 的候选图","ok")}
+ if(a==="recover"){
+   if(t.status==="failed"){t.note="自动降级：1024→768、候选 4→2，从 checkpoint 续跑";log("OOM 分类恢复：降分辨率 + 减候选，从 "+t.checkpoint+"% 续跑 #"+id,"ok")}
+   else {t.note="从 checkpoint "+t.checkpoint+"% 续跑，已出候选保留";log("断点恢复：任务 #"+id+" 从 "+t.checkpoint+"% 继续","ok")}
+   t.status="queued";t.progress=t.checkpoint;
+ }
+ save();render();
+}
+function tick(){
+ if(!state.paused&&!state.running){
+  var t=state.tasks.find(function(x){return x.status==="queued"});
+  if(t){t.status="running";state.running=t.id;t.note=t.prio?"P0 前台编辑 · 优先执行":"单执行槽运行中";log("开始任务 #"+t.id+" · "+t.name)}
+ }
+ var cur=state.tasks.find(function(x){return x.id===state.running});
+ if(cur&&cur.status==="running"){
+  var step=state.fine?3:9;
+  cur.progress=Math.min(100,cur.progress+step);
+  cur.checkpoint=Math.floor(cur.progress/10)*10;
+  cur.note="采样中 "+cur.progress+"% · 已落盘 "+Math.floor(cur.progress/25)+"/"+cur.count+" 张候选";
+  if(cur.progress>=100){
+   cur.status="succeeded";cur.note="完成 "+cur.count+" 张候选 · 参数与 seed 已存档";
+   state.running=null;
+   for(var i=0;i<Math.min(3,cur.count);i++)state.cands.push({color:cur.color});
+   if(state.cands.length>12)state.cands=state.cands.slice(-12);
+   drawThumbs();log("任务 #"+cur.id+" 完成，产物已增量落盘","ok");save();
+  }
+ }
+ save();render();
+}
+function bind(){
+ $("style").onchange=function(){state.style=this.value;drawStage();save();log("模板 → "+state.style)};
+ $("size").onchange=function(){state.size=this.value;drawStage();save()};
+ $("count").onchange=function(){state.count=+this.value;save()};
+ $("scope").onchange=function(){state.scope=+this.value;save()};
+ $("fine").onchange=function(){state.fine=this.checked;save();
+   $("quick").innerHTML=state.fine?"精修模式：Qwen-Image fp8 独占显存，后台队列将排空后再切换，单张约 27 秒。":"默认快速档：Z-Image-Turbo Q5 · 8 步 · 约 5–8 秒/张。<br>勾选精修会切换 Qwen-Image fp8 并暂停后台队列。";
+   log(state.fine?"切换精修档（模型串行加载）":"切回快速档",state.fine?"wn":"")};
+ $("btnGen").onclick=function(){
+  var n=Math.min(state.scope,SKUS.length);
+  function localExpand(){
+   for(var i=0;i<n;i++){
+    var s=SKUS[i];
+    addTask(s.name+" · "+state.style,s.id+" / "+state.size+" / "+state.count+" 候选 / "+(state.fine?"精修档":"快速档"),false,state.count);
+   }
+   log("展开批量任务（内置模拟编排）："+n+" SKU × "+state.size+"，写入队列并落盘参数快照","ok");save();render();
+  }
+  if(!state.apiOn){localExpand();return}
+  apiState("请求本地工作流中…");
+  callWorkflow({scene:"ecom",product_name:SKUS[state.sku].name,style:state.style,size:state.size,
+                sku_count:String(n),candidates:String(state.count),fine:state.fine?"1":"0"},
+   function(o){
+    try{
+     var plan=JSON.parse(o.plan||"{}"),ts=plan.tasks||[];
+     if(!ts.length)throw new Error("回包中没有任务");
+     ts.forEach(function(t){
+      addTask(t.name||("SKU · "+state.style),(t.sku||"SKU")+" / "+(t.size||state.size)+" / "+
+              (t.candidates||state.count)+" 候选 / "+(t.engine||"本地档"),false,t.candidates||state.count);
+     });
+     apiState("已接入 · "+(o.engine||"本地模型")+" · 回包 "+ts.length+" 个任务","ok");
+     log("工作流回包 /v1/workflows/run："+ts.length+" 个结构化任务，锚图锁定="+(plan.anchor_lock!==false)+
+         "，cloud_fallback="+(plan.cloud_fallback===true),"ok");
+     var imgs=[];try{imgs=JSON.parse(o.images||"[]")}catch(e2){}
+     if(imgs.length){
+       imgs.forEach(function(im){state.cands.unshift({color:SKUS[state.sku].c,img:im.url,sku:im.sku})});
+       if(state.cands.length>12)state.cands=state.cands.slice(0,12);
+       state.heroImg=imgs[0].url;drawStage();drawThumbs();
+       log((imgs[0].reused?"额度冷却中 · 复用本地已落盘候选 ":"真实图片已落盘 ")
+           +imgs.length+" 张（"+(o.engine_mode||"")+" 模式 / "+(imgs[0].provider||"")+"），画布已切换为真图","ok");
+     }
+     var errs=[];try{errs=JSON.parse(o.images_error||"[]")}catch(e3){}
+     if(errs.length)log("出图未完成："+errs[0]+"（队列不受影响，界面继续可用）","wn");
+     save();render();
+    }catch(e){apiState("回包解析失败，已回退内置编排","er");log("工作流回包异常："+e.message,"wn");localExpand()}
+   },
+   function(e){apiState("未连接本地服务 · 已自动回退内置编排","er");
+     log("工作流不可达（"+e.message+"）：按端侧策略回退，界面不阻塞","wn");localExpand()});
+ };
+ $("btnEdit").onclick=function(){
+  addTask("局部重绘 · "+SKUS[state.sku].name,"锚图不变 / 仅重绘选区 / P0 插队",true,1);
+  log("前台编辑生成 P0 增量任务，插到队首；后台批量不受影响","ok");save();render();
+ };
+ $("btnClearCanvas").onclick=function(){state.cands=[];state.heroImg=null;drawThumbs();drawStage();save();log("清除画布预览（已落盘产物不受影响）")};
+ $("btnPause").onclick=function(){state.paused=!state.paused;log(state.paused?"队列已暂停（不中断当前任务）":"队列已继续","wn");save();render()};
+ $("btnInterrupt").onclick=function(){
+  var t=state.tasks.find(function(x){return x.id===state.running});
+  if(!t){log("当前没有运行中的任务","wn");return}
+  t.status="interrupted";t.note="POST /interrupt · 已完成 "+Math.floor(t.progress/25)+" 张候选保留";state.running=null;
+  log("中断当前任务 #"+t.id+"，显存已释放，已出候选保留","wn");save();render();
+ };
+ $("btnOOM").onclick=function(){
+  var t=state.tasks.find(function(x){return x.id===state.running})||state.tasks.find(function(x){return x.status==="queued"});
+  if(!t){log("队列为空，先生成任务","wn");return}
+  if(t.status==="queued"){t.status="running"}
+  t.status="failed";t.note="OOMError · 需按错误类型降级后重试";if(state.running===t.id)state.running=null;
+  log("模拟 OOMError：任务 #"+t.id+" 失败，不自动原样重跑","er");save();render();
+ };
+ $("btnReset").onclick=function(){state.tasks=[];state.running=null;state.cands=[];state.heroImg=null;drawThumbs();drawStage();log("清空队列与预览（草稿与参数仍保留）","wn");save();render()};
+ $("apiOn").onchange=function(){state.apiOn=this.checked;save();
+   apiState(this.checked?"已开启 · 批量生成将先走本地 Dify 工作流":"未连接 · 当前使用内置模拟编排");
+   log(this.checked?"开启 API 接入：POST /v1/workflows/run（仅本机回环）":"关闭 API 接入：回到内置模拟编排",this.checked?"ok":"")};
+ $("btnApiTest").onclick=function(){
+  apiState("测试中…");
+  callWorkflow({scene:"ecom",product_name:SKUS[state.sku].name,style:state.style,size:state.size,
+                sku_count:"1",candidates:"2",generate_images:"0"},
+   function(o){apiState("已接入 · Dify 工作流可用 · "+(o.engine||"本地模型"),"ok");
+     log("连通性测试通过：/v1/workflows/run → data.outputs.plan（local_only="+(o.local_only===true)+"）","ok")},
+   function(e){apiState("未连接：请先双击「启动本地服务.command」","er");
+     log("连通性测试失败："+e.message+"（不影响原型使用，自动回退）","wn")});
+ };
+}
+load();
+$("style").value=state.style;$("size").value=state.size;$("count").value=state.count;
+$("scope").value=state.scope;$("fine").checked=state.fine;$("apiOn").checked=state.apiOn;
+drawSkus();drawStage();drawThumbs();bind();render();
+log("工作台就绪 · 本地草稿已还原"+(state.tasks.length?"（"+state.tasks.length+" 个任务）":""));
+log("提示：先点「批量生成」，再试「中断当前 / 模拟 OOM / 恢复」，最后刷新页面看草稿是否还在");
+setInterval(tick,420);
+})();
+</script>
+</body>
+</html>

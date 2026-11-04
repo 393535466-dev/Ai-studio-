@@ -1,0 +1,13 @@
+# 项目私有数据，不上传
+.workbuddy/
+__pycache__/
+*.pyc
+
+# 运行时产物
+03_Dify工作流与API接入/runtime_state.json
+03_Dify工作流与API接入/outputs/
+
+# 文档生成脚本（本地构建工具，不属于交付物）
+_generate.py
+
+.DS_Store

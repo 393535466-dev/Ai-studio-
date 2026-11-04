@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>文档 ④ · Dify 工作流与 API 接入说明</title>
+<style>
+:root{--ink:#1f2937;--ink2:#4b5563;--ink3:#6b7280;--line:#e5e7eb;--bg:#f6f8fb;
+--blue:#1d4ed8;--blue-bg:#eff6ff;--blue-line:#bfdbfe;--teal:#0f766e;--teal-bg:#f0fdfa;
+--amber:#b45309;--amber-bg:#fffbeb;--red:#b91c1c;--red-bg:#fef2f2;--purple:#6d28d9;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+header.hero{background:#fff;border-bottom:1px solid var(--line);border-top:4px solid var(--blue);margin-bottom:28px}
+.hero-in{max-width:1080px;margin:0 auto;padding:30px 24px 26px}
+.kicker{display:inline-block;font-size:12px;letter-spacing:.08em;color:var(--blue);background:var(--blue-bg);
+border:1px solid var(--blue-line);border-radius:99px;padding:3px 12px;margin-bottom:14px}
+h1{font-size:27px;line-height:1.35;margin:0 0 8px;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--ink2);font-size:14px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.meta span{font-size:12px;color:var(--ink2);background:#f3f4f6;border-radius:6px;padding:4px 10px}
+nav.toc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:26px;
+display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:13px;color:var(--ink2);text-decoration:none;padding:5px 11px;border-radius:7px;background:#f9fafb;border:1px solid var(--line)}
+nav.toc a:hover{color:var(--blue);border-color:var(--blue-line);background:var(--blue-bg)}
+section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin-bottom:20px}
+h2{font-size:20px;margin:0 0 16px;font-weight:650;letter-spacing:-.01em;scroll-margin-top:20px}
+h2 .n{display:inline-block;font-size:12px;color:#fff;background:var(--blue);border-radius:6px;
+padding:2px 8px;margin-right:10px;vertical-align:3px;font-weight:500}
+h3{font-size:16px;margin:22px 0 10px;font-weight:650}
+h3:first-of-type{margin-top:4px}
+p{margin:10px 0}
+ul,ol{margin:10px 0;padding-left:22px}
+li{margin:6px 0}
+strong{font-weight:650}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:#f3f4f6;
+border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#9a3412}
+.tw{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:600px}
+th{background:#f8fafc;text-align:left;font-weight:650;color:var(--ink);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #f1f3f5;vertical-align:top;color:var(--ink2)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fafbfc}
+td:first-child{color:var(--ink);font-weight:550}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fcfdfe}
+.card .ct{font-weight:650;font-size:14px;margin-bottom:6px;color:var(--ink)}
+.card .cb{font-size:13px;color:var(--ink2);line-height:1.65}
+.note{border-left:3px solid var(--blue);background:var(--blue-bg);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:14px}
+.note.warm{border-color:var(--amber);background:var(--amber-bg)}
+.note.danger{border-color:var(--red);background:var(--red-bg)}
+.note.good{border-color:var(--teal);background:var(--teal-bg)}
+.note .nt{font-weight:650;margin-bottom:4px;display:block}
+.plain{background:var(--teal-bg);border:1px solid #99f6e4;border-radius:12px;padding:18px 22px;margin:0 0 20px}
+.plain .pt{font-weight:650;color:var(--teal);font-size:14px;margin-bottom:8px}
+.plain p{margin:6px 0;font-size:14.5px}
+.svgbox{overflow-x:auto;margin:18px 0;text-align:center}
+.svgbox svg{max-width:100%;height:auto}
+.tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:5px;margin-right:5px;font-weight:600}
+.tag.b{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-line)}
+.tag.t{background:var(--teal-bg);color:var(--teal);border:1px solid #99f6e4}
+.tag.a{background:var(--amber-bg);color:var(--amber);border:1px solid #fde68a}
+.tag.r{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0;font-size:13px}
+.flow .step{background:#fff;border:1px solid var(--blue-line);border-radius:8px;padding:8px 12px;color:var(--blue);font-weight:550}
+.flow .arw{color:var(--ink3)}
+footer{color:var(--ink3);font-size:12.5px;text-align:center;padding:28px 0 0;border-top:1px solid var(--line);margin-top:30px}
+.src{font-size:12.5px;color:var(--ink2);line-height:1.9}
+.src a{color:var(--blue);text-decoration:none;word-break:break-all}
+.src a:hover{text-decoration:underline}
+@media(max-width:640px){.wrap{padding:0 14px 50px}.hero-in{padding:22px 14px}section{padding:20px 16px}h1{font-size:22px}}
+@media print{body{background:#fff}nav.toc{display:none}section{break-inside:avoid;box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="hero-in">
+<span class="kicker">补充交付 / Demo 的第二层 · 两套场景共用</span>
+<h1>文档 ④ · Dify 工作流与 API 接入说明</h1>
+<p class="sub">可导入 Dify 的工作流 DSL + 可运行的本地编排服务 + 完整 API 契约</p>
+<div class="meta"><span>对应题干：接入 API</span><span>Dify 自部署 + 本地模型</span><span>零依赖可运行服务</span><span>2026-11-04</span></div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a href="#why">01 定位</a><a href="#line">02 离线红线</a><a href="#arch">03 架构</a><a href="#nodes">04 节点表</a><a href="#json">05 结构化输出</a><a href="#api">06 API 契约</a><a href="#local">07 本地服务</a><a href="#manual">08 手工搭建</a><a href="#demo">09 Demo 对接</a><a href="#map">10 平台能力</a><a href="#qa">11 课堂追问</a><a href="#pit">12 常见坑</a><a href="#files">13 文件清单</a></nav>
+<div class="plain"><div class="pt">30 秒看懂这份补充交付在干嘛</div><p>题目里 demo 的原文是「用熟悉的 AI 工具搭可交互原型，或给出关键页面线框 + 交互说明」——考的是<strong>前端界面</strong>，所以两个 HTML 工作台不能少。但题干还有一句「产品 = 本地大模型 + <strong>接入 API</strong> + 创作应用」，纯界面原型证明不了中间那层。这份补充交付做的就是它：<strong>Dify 自部署工作流</strong>把一句需求拆成结构化任务，<strong>本地编排服务</strong>把任务交给本机推理引擎，画布负责让人操作。三者合起来，才是题干说的那台小作坊。</p></div><section id="why"><h2><span class="n">01</span>为什么 Dify 工作流算 Demo 的一部分，而不是第四份文档</h2><div class="tw"><table><thead><tr><th>题目原文 / 考点</th><th>原来的 HTML 工作台</th><th>补上 Dify 之后</th></tr></thead><tbody><tr><td>「用 AI 工具搭可交互原型」</td><td>画布、批量参数、队列、中断 / 恢复、自动存稿都能点</td><td>不变，继续当界面层</td></tr><tr><td>「本地大模型 + 接入 API + 创作应用」</td><td>只在文档里用文字描述过三层关系</td><td>有可导入 DSL、可调用 API、实测回包，三层真的接起来了</td></tr><tr><td>「账号、授权、算力调度协作」</td><td>文档 ③ 展开了算力调度</td><td>API 的 user / Bearer Key / 单执行槽 / stop 接口把账号与授权落到接口上</td></tr><tr><td>「全部推理在本地，无云端兜底」</td><td>文档里做了声明</td><td>DSL 与服务的所有 URL 都是本机回环，回包里带 local_only=true 与 cloud_fallback=false</td></tr></tbody></table></div><div class="note good"><span class="nt">一句话记住分工</span>HTML 原型回答<strong>「长什么样、怎么点」</strong>，Dify 工作流回答<strong>「点下去之后数据怎么走」</strong>。两者是同一个 Demo 的两层，不是两份互相竞争的作业；老师要的「三个文档 + 一个 demo」结构没有被改动。</div></section><section id="line"><h2><span class="n">02</span>一条不能踩的红线：必须全本地</h2><div class="tw"><table><thead><tr><th>配置</th><th>能不能用</th><th>原因</th></tr></thead><tbody><tr><td>Dify Cloud / api.dify.ai</td><td><span class='tag r'>禁止</span></td><td>云端 SaaS，编排本身跑在别人机器上</td></tr><tr><td>LLM 节点填 OpenAI / Claude / 云端大模型 Key</td><td><span class='tag r'>禁止</span></td><td>推理出本机，直接违反题设</td></tr><tr><td>HTTP 节点指向公网出图 / 视频 API</td><td><span class='tag r'>禁止</span></td><td>就是被明令禁止的「云端兜底」</td></tr><tr><td>RunningHub / 云端 ComfyUI 平台 API</td><td><span class='tag r'>禁止</span></td><td>云端 GPU + 云端推理，正是题设明令禁止的兜底形态</td></tr><tr><td>Dify 社区版 Docker 自部署</td><td><span class='tag t'>可以</span></td><td>与创作应用跑在同一台端侧主机</td></tr><tr><td>LLM 节点指向 Ollama / vLLM / LocalAI / Xinference</td><td><span class='tag t'>可以</span></td><td>OpenAI 兼容接口，权重在本机</td></tr><tr><td>HTTP 节点指向 127.0.0.1 / host.docker.internal</td><td><span class='tag t'>可以</span></td><td>本机回环，不出网</td></tr></tbody></table></div><div class="note danger"><span class="nt">最容易一句话穿帮的地方</span>千万别写「模型跑不动时切到云端 API」。本套 DSL 的降级只写<strong>降分辨率、减候选、排队、取消</strong>；代码节点里还把 fallback 字段硬改成本地降级顺序，连提示词都禁止模型写出云端兜底。</div><div class="note danger"><span class="nt">RunningHub 要不要接？不要 —— 但要写进「考虑过并排除」</span>RunningHub 是海马云旗下的<strong>云端 ComfyUI 平台</strong>：浏览器里拖节点、调用云端 GPU、按量计费、对外提供工作流 API。它解决的是「本机没有显卡、不想配环境」的痛点，而这道题的前提恰恰是<strong>全部推理在本地完成，无云端兜底</strong>——接上去等于把最核心的约束直接推翻，写一句「调用 RunningHub API 出图」整份方案就作废。正确做法是把它当成<strong>对照方案</strong>：主动说明「考虑过云端 ComfyUI，因推理外移而排除，本机改用 ComfyUI 加载本地权重」，老师追问时反而能证明你读懂了题设。<br><br>唯一不越界的用法：<strong>只拿它练手设计工作流</strong>——在云端把 ComfyUI 节点连好、导出 <code>workflow_api.json</code>，再把这份 JSON 放回本机 ComfyUI 跑，推理仍在本机。它属于学习工具，既不写进正式方案，也不出现在任何降级链路里。</div><div class="note warm"><span class="nt">和课程里学的 Dify 有什么不同</span>课上多半用的是 Dify Cloud 版，随手填个大模型 Key 就能跑。这道作业里要额外说一句：<strong>换成自部署社区版 + 本地模型供应商</strong>。这一点主动写出来，比闷头贴截图更能体现「端侧意识」。</div></section><section id="arch"><h2><span class="n">03</span>整体链路：三层怎么接起来</h2><div class="svgbox"><svg viewBox="0 0 1000 366" width="1000" role="img" aria-label="端侧三层链路架构图">
+<rect x="12" y="10" width="976" height="346" rx="14" fill="#fbfdff" stroke="#c7d2fe" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="30" y="34" font-size="13" fill="#4338ca" font-weight="600">离线边界 · 所有流量只在 127.0.0.1 / host.docker.internal，无任何外网请求</text>
+
+<rect x="34" y="58" width="216" height="214" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+<text x="52" y="86" font-size="15" fill="#1d4ed8" font-weight="650">创作应用 · 画布</text>
+<text x="52" y="112" font-size="12" fill="#1e40af">两个可交互 HTML Demo</text>
+<rect x="52" y="126" width="180" height="30" rx="6" fill="#ffffff" stroke="#bfdbfe"/>
+<text x="62" y="146" font-size="11.5" fill="#334155">批量参数 / SKU / 剧本</text>
+<rect x="52" y="164" width="180" height="30" rx="6" fill="#ffffff" stroke="#bfdbfe"/>
+<text x="62" y="184" font-size="11.5" fill="#334155">任务队列 / 中断 / 恢复</text>
+<rect x="52" y="202" width="180" height="30" rx="6" fill="#ffffff" stroke="#bfdbfe"/>
+<text x="62" y="222" font-size="11.5" fill="#334155">localStorage 自动存稿</text>
+<text x="52" y="256" font-size="11" fill="#64748b">用户看得见、点得动的一层</text>
+
+<rect x="296" y="58" width="392" height="214" rx="12" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5"/>
+<text x="314" y="86" font-size="15" fill="#6d28d9" font-weight="650">接入 API · Dify 工作流（自部署）</text>
+<text x="314" y="110" font-size="12" fill="#5b21b6">POST /v1/workflows/run · 业务编排，不画像素</text>
+<rect x="312" y="126" width="84" height="52" rx="7" fill="#ffffff" stroke="#ddd6fe"/>
+<text x="330" y="148" font-size="12" fill="#4c1d95" font-weight="600">开始</text><text x="326" y="166" font-size="10" fill="#64748b">输入变量</text>
+<rect x="404" y="126" width="84" height="52" rx="7" fill="#ffffff" stroke="#ddd6fe"/>
+<text x="420" y="148" font-size="12" fill="#4c1d95" font-weight="600">本地 LLM</text><text x="416" y="166" font-size="10" fill="#64748b">拆成 JSON</text>
+<rect x="496" y="126" width="84" height="52" rx="7" fill="#ffffff" stroke="#ddd6fe"/>
+<text x="512" y="148" font-size="12" fill="#4c1d95" font-weight="600">代码</text><text x="506" y="166" font-size="10" fill="#64748b">校验 / 裁剪</text>
+<rect x="588" y="126" width="84" height="52" rx="7" fill="#ffffff" stroke="#ddd6fe"/>
+<text x="606" y="148" font-size="12" fill="#4c1d95" font-weight="600">HTTP</text><text x="598" y="166" font-size="10" fill="#64748b">调本机 API</text>
+<path d="M396 152 L402 152" stroke="#7c3aed" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M488 152 L494 152" stroke="#7c3aed" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M580 152 L586 152" stroke="#7c3aed" stroke-width="2" marker-end="url(#ar)"/>
+<text x="312" y="212" font-size="11" fill="#64748b">结构化输出靠「提示词约束 + 代码兜底」，不赌模型自觉</text>
+<text x="312" y="236" font-size="11" fill="#64748b">两份 DSL：电商 / 短剧，各 5 个节点、4 条连线</text>
+<text x="312" y="260" font-size="11" fill="#64748b">发布为 API 后由画布调用，API Key 只存服务端</text>
+
+<rect x="734" y="58" width="230" height="214" rx="12" fill="#f0fdfa" stroke="#5eead4" stroke-width="1.5"/>
+<text x="752" y="86" font-size="15" fill="#0f766e" font-weight="650">本地大模型 · 推理</text>
+<text x="752" y="112" font-size="12" fill="#115e59">Ollama / vLLM + ComfyUI</text>
+<rect x="752" y="126" width="194" height="30" rx="6" fill="#ffffff" stroke="#99f6e4"/>
+<text x="762" y="146" font-size="11.5" fill="#334155">Qwen3-4B · 拆解与提示词</text>
+<rect x="752" y="164" width="194" height="30" rx="6" fill="#ffffff" stroke="#99f6e4"/>
+<text x="762" y="184" font-size="11.5" fill="#334155">Z-Image / Qwen-Image 出图</text>
+<rect x="752" y="202" width="194" height="30" rx="6" fill="#ffffff" stroke="#99f6e4"/>
+<text x="762" y="222" font-size="11.5" fill="#334155">单卡串行 · 显存调度</text>
+<text x="752" y="256" font-size="11" fill="#64748b">全部权重在本机磁盘</text>
+
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/></marker></defs>
+<path d="M250 130 L294 130" stroke="#1d4ed8" stroke-width="2" marker-end="url(#ar2)"/>
+<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#1d4ed8"/></marker></defs>
+<text x="252" y="122" font-size="10.5" fill="#1d4ed8">① 提交需求</text>
+<path d="M688 190 L732 190" stroke="#0f766e" stroke-width="2" marker-end="url(#ar3)"/>
+<defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#0f766e"/></marker></defs>
+<text x="703" y="180" font-size="11" fill="#0f766e">③</text>
+<path d="M964 296 L40 296" stroke="#b45309" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#ar4)"/>
+<defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker></defs>
+<text x="360" y="288" font-size="11.5" fill="#b45309">④ data.outputs 回包 → 画布把 plan.tasks 渲染成任务队列，草稿本地落盘</text>
+<text x="34" y="332" font-size="11.5" fill="#475569">② Dify 内部：开始 → 本地 LLM → 代码校验 → HTTP 请求 → 结束；③ HTTP 节点把任务 POST 给本机 /prompt；全程不联网、无云端兜底。</text>
+</svg></div><div class="tw"><table><thead><tr><th>层</th><th>跑在哪</th><th>对外接口</th><th>对应交付物</th></tr></thead><tbody><tr><td>创作应用</td><td>浏览器（自包含 HTML）</td><td>POST /v1/workflows/run</td><td>两个 Demo 视觉创作工作台</td></tr><tr><td>接入 API / 编排</td><td>Dify 自部署 + 本地编排服务 127.0.0.1:8765</td><td>/v1/workflows/run、/api/ecom/generate、/api/drama/generate</td><td>两份 DSL + local_api_server.py</td></tr><tr><td>本地大模型</td><td>Ollama / vLLM + ComfyUI（同一台主机）</td><td>ComfyUI POST /prompt、/queue、/interrupt</td><td>两套文档 ① 的模型选型</td></tr></tbody></table></div><div class="note "><span class="nt">为什么要分层，而不是让画布直接调 ComfyUI</span>画布直接调推理引擎也能出图，但「把一句中文需求拆成 6 个 SKU 的任务清单」「把剧本拆成 6 个分镜」「校验模型吐的 JSON 合不合规」这些<strong>业务编排</strong>就会散落在前端代码里，改一次提示词要发一次版。抽成 Dify 工作流后，PM 改的是画布上的节点，应用侧只认一份稳定的 API 契约——这正是题干里「接入 API」的价值。</div></section><section id="nodes"><h2><span class="n">04</span>两份 DSL 逐节点说明</h2><h3>套装 A · 电商素材工作流（5 节点 / 4 连线）</h3><div class="tw"><table><thead><tr><th>#</th><th>节点</th><th>类型</th><th>输入 → 输出</th><th>解决的问题</th></tr></thead><tbody><tr><td>1</td><td>开始 · 批量参数</td><td>start</td><td>商品名 / 风格 / 尺寸 / SKU 数 / 候选数 → 6 个输入变量</td><td>把画布上的表单变成 API 的 inputs 字段</td></tr><tr><td>2</td><td>本地 LLM · 需求拆解</td><td>llm</td><td>变量 → 严格 JSON（plan_id / engine / tasks[]）</td><td>把一句话拆成可执行的批量任务，不画像素</td></tr><tr><td>3</td><td>代码 · 结构化校验</td><td>code</td><td>LLM 文本 → plan_json / request_json / task_count / summary</td><td>去 Markdown 围栏、补字段、裁剪数量、复核无云端约束</td></tr><tr><td>4</td><td>HTTP · 提交本地出图</td><td>http-request</td><td>request_json → POST host.docker.internal:8765/api/ecom/generate</td><td>把任务清单交给本机 ComfyUI 封装层</td></tr><tr><td>5</td><td>结束 · 回传画布</td><td>end</td><td>plan / generate_result / summary / task_count</td><td>data.outputs 即画布渲染队列的数据源</td></tr></tbody></table></div><h3>套装 B · 短剧自动化工作流（5 节点 / 4 连线）</h3><div class="tw"><table><thead><tr><th>#</th><th>节点</th><th>类型</th><th>输入 → 输出</th><th>解决的问题</th></tr></thead><tbody><tr><td>1</td><td>开始 · 剧本与边界</td><td>start</td><td>剧本 / 分镜数 / 档位 / re-anchor → 4 个输入变量</td><td>把端侧边界当参数暴露给创作者</td></tr><tr><td>2</td><td>本地 LLM · 拆分镜</td><td>llm</td><td>剧本 → JSON（characters / shots[]）</td><td>结构化分镜：景别、动作、时长、提示词、机位</td></tr><tr><td>3</td><td>代码 · 边界裁剪</td><td>code</td><td>LLM 文本 → plan_json / request_json / shot_count</td><td>强制 dur ≤ 5s、identity_ref 回原始锚图、图先行只排关键帧</td></tr><tr><td>4</td><td>HTTP · 提交关键帧</td><td>http-request</td><td>request_json → POST /api/drama/generate</td><td>审片通过前不启动昂贵的 I2V</td></tr><tr><td>5</td><td>结束 · 回传审片台</td><td>end</td><td>plan / generate_result / summary / shot_count</td><td>镜头卡片墙直接消费这份结构化结果</td></tr></tbody></table></div><div class="note good"><span class="nt">两份不是复制粘贴</span>电商的代码节点守的是<strong>多 SKU 一致性</strong>（锚图锁定、候选数裁剪）；短剧守的是<strong>端侧算力边界</strong>（时长、身份漂移、图先行）。这正是文档 ① 和文档 ③ 里两套方案差异在编排层的延续。</div></section><section id="json"><h2><span class="n">05</span>结构化输出：为什么用「提示词约束 + 代码校验」</h2><p>Dify 支持在 LLM 节点开启结构化输出并写 JSON Schema，但在这道题里直接依赖它是有风险的：</p><ul><li><strong>端侧小模型不一定原生支持</strong>。官方文档明确：模型不支持时 Dify 会退化成「把 Schema 塞进提示词」，回复仍可能不合规，节点运行会失败。</li><li><strong>版本稳定性</strong>。社区已知 1.14.0 出现过 <code>structured_output_enabled</code> 静默失效的问题（issue #35789），把整条链路押在单一开关上不划算。</li><li><strong>无云端兜底</strong>。别的方案解析失败可以换个更强的云端模型重试，这里不行，必须在本机把兜底做实。</li></ul><p>所以本方案用三层保证：① 系统提示词把 JSON 结构、字段类型、禁止项写死；② 代码节点去围栏、<code>json.loads</code>、补齐必填字段、裁剪数量；③ 解析失败走<strong>本地规则兜底</strong>生成一份合法计划，绝不转云端重试。DSL 里没有用原生开关，导入任何版本都能跑。</p><pre style="background:#f8fafc;color:#1f2937;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;overflow-x:auto;font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;margin:12px 0">{
+  "type": "object",
+  "properties": {
+    "plan_id":    {"type": "string"},
+    "engine":     {"type": "string", "enum": ["Z-Image-Turbo Q5_K_S", "Qwen-Image fp8"]},
+    "anchor_lock":{"type": "boolean"},
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sku": {"type": "string"}, "style": {"type": "string"},
+          "size": {"type": "string"}, "candidates": {"type": "integer"},
+          "prompt": {"type": "string"}, "seed": {"type": "integer"}
+        },
+        "required": ["sku", "style", "size", "candidates", "prompt"]
+      }
+    }
+  },
+  "required": ["plan_id", "engine", "anchor_lock", "tasks"]
+}</pre><div class="note good"><span class="nt">这里藏着一个产品判断</span>把「模型一定会吐合规 JSON」这种<strong>假设</strong>，换成一个在端侧也成立的<strong>工程保证</strong>。课堂上讲结构化输出时，能补一句「端侧小模型要配代码校验兜底」，比只会点开关更像是 PM 的回答。</div></section><section id="api"><h2><span class="n">06</span>API 契约（与 Dify 官方形态对齐）</h2><p>工作流发布后，Dify 官方端点是 <code>POST /v1/workflows/run</code>，请求体为 <code>inputs</code>（变量名必须和开始节点一致）、<code>response_mode: blocking</code>、<code>user</code>（终端用户标识），鉴权用 <code>Authorization: Bearer app-xxx</code>。本地编排服务提供了<strong>同形态</strong>的接口，所以在没装 Dify 的机器上也能把链路跑通；换成真 Dify 时只改域名和 Key。</p><div class="tw"><table><thead><tr><th>字段</th><th>类型</th><th>示例 / 说明</th></tr></thead><tbody><tr><td>inputs</td><td>object</td><td>键名 = 开始节点变量名；电商 6 个、短剧 4 个</td></tr><tr><td>inputs.scene</td><td>string</td><td>本地服务用来分派电商 / 短剧；真 Dify 里由不同应用各自承担，可不传</td></tr><tr><td>response_mode</td><td>string</td><td>blocking（一次性返回）；长任务可改 streaming，但端侧视频更该用队列 + 轮询</td></tr><tr><td>user</td><td>string</td><td>账号维度：同一 user 的运行记录与产物互相可见，用于隔离</td></tr><tr><td>data.outputs.plan</td><td>string(JSON)</td><td>结构化计划，画布 parse 后得到 tasks[] / shots[]</td></tr><tr><td>data.outputs.generate_result</td><td>string(JSON)</td><td>本地出图 API 的回执（accepted / engine / local_only）</td></tr><tr><td>data.outputs.task_count / shot_count</td><td>number</td><td>队列长度，直接渲染到界面</td></tr><tr><td>task_id</td><td>string</td><td>配合 POST /v1/workflows/{task_id}/stop 做中断，对应文档 ③</td></tr></tbody></table></div><h3>调用示例 · curl</h3><pre style="background:#f8fafc;color:#1f2937;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;overflow-x:auto;font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;margin:12px 0">curl -X POST http://127.0.0.1:8765/v1/workflows/run \
+  -H 'Content-Type: application/json' \
+  -d '{"inputs":{"scene":"ecom","product_name":"保温杯","style":"极简白棚","size":"1:1 主图","sku_count":"6","candidates":"4"},"response_mode":"blocking","user":"studio-local"}' </pre><h3>调用示例 · Python（零依赖）</h3><pre style="background:#f8fafc;color:#1f2937;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;overflow-x:auto;font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;margin:12px 0">import json, urllib.request
+payload = {"inputs": {"scene": "drama", "script": "夜色，便利店门口。两人对视。",
+                      "shot_count": "6", "resolution": "480p 预演",
+                      "anchor_lock": "每镜头 re-anchor（推荐）"},
+           "response_mode": "blocking", "user": "studio-local"}
+req = urllib.request.Request("http://127.0.0.1:8765/v1/workflows/run",
+    data=json.dumps(payload).encode("utf-8"),
+    headers={"Content-Type": "application/json"})
+with urllib.request.urlopen(req, timeout=30) as r:
+    outputs = json.load(r)["data"]["outputs"]
+plan = json.loads(outputs["plan"])
+print(outputs["summary"], "-> 镜头数", len(plan["shots"]))</pre><h3>调用示例 · 浏览器（两个 Demo 里就是这么写的）</h3><pre style="background:#f8fafc;color:#1f2937;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;overflow-x:auto;font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;margin:12px 0">const res = await fetch("http://127.0.0.1:8765/v1/workflows/run", {
+  method: "POST", headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({inputs, response_mode: "blocking", user: "studio-local"})
+});
+const { data } = await res.json();
+const plan = JSON.parse(data.outputs.plan);   // plan.tasks / plan.shots
+// 失败时自动回退到内置编排，界面不会卡住</pre><div class="note "><span class="nt">账号 / 授权怎么落</span>真 Dify 里应用 API Key 只放服务端，绝不写进前端 HTML（官方文档也是这么要求的）；本地验证服务只监听回环、用 no-auth，是为了让作业在课堂上能一键演示，不代表产品里可以省掉鉴权。</div></section><section id="local"><h2><span class="n">07</span>本地编排服务：不装 Dify 也能验证整条链路</h2><p><code>local_api_server.py</code> 只用 Python 标准库，双击同目录的 <code>启动本地服务.command</code> 即可；或者命令行执行 <code>python3 local_api_server.py</code>。它同时扮演三个角色：</p><div class="tw"><table><thead><tr><th>角色</th><th>端点</th><th>谁在调</th></tr></thead><tbody><tr><td>Dify 工作流 API 形态</td><td>POST /v1/workflows/run</td><td>两个 HTML Demo 的画布</td></tr><tr><td>DSL 里 HTTP 节点的本机出图 API</td><td>POST /api/ecom/generate、/api/drama/generate</td><td>导入后的 Dify 工作流</td></tr><tr><td>运行记录与中断</td><td>GET /health、GET /v1/workflows/run/{id}、POST /v1/workflows/{task_id}/stop</td><td>运维 / 加分项演示</td></tr></tbody></table></div><p>服务会把运行记录增量写到 <code>runtime_state.json</code>，重启后仍可查询——这是文档 ③「三层持久化」在编排层的一个小实证。</p><div class="note warm"><span class="nt">必须诚实说清楚的一件事</span>服务默认跑在 <code>--engine mock</code>（作业正式方案）：它是<strong>编排层可运行验证器</strong>，<strong>不加载模型权重、不产出真实图像</strong>，只回一份「已排队」的收据。现在额外提供两个可切换驱动：<code>--engine local</code> 接本机 ComfyUI 真出图（推理仍全在本地），<code>--engine cloud</code> 是给没有显卡的机器做开发演示的 DEV ONLY 通道（不进作业正文，详见文档 ⑤）。三种模式共用同一套队列、状态机与回包结构，上层零改动。课堂演示优先用默认离线模式，并主动讲清这个边界——老师问「图呢」，你答的是架构而不是魔术。</div><div class="note "><span class="nt">Dify 跑在 Docker 里怎么连</span>DSL 里 HTTP 节点默认写 <code>http://host.docker.internal:8765</code>；容器内的 <code>127.0.0.1</code> 指的是容器自己，会连接超时。此时用 <code>python3 local_api_server.py --host 0.0.0.0</code> 启动。若 Dify 和服务都在宿主机上跑，把 URL 改回 <code>127.0.0.1</code> 即可。默认离线模式下只监听本机 / 内网，不向外网发请求；只有显式开 <code>--engine cloud</code> 的开发演示模式才会访问公网（详见文档 ⑤）。</div></section><section id="manual"><h2><span class="n">08</span>DSL 导入失败时的手工搭建路径</h2><p>Dify 版本迭代快，导入 yml 偶尔会因为字段差异失败。照下面 7 步拖一遍，五分钟就能还原，作业不会卡住：</p><ol><li>工作室 → 导入 DSL 文件（或「创建空白应用」→ 选 <strong>Workflow</strong>）。</li><li><strong>开始节点</strong>：按文档 04 节的表添加输入变量（电商 6 个 / 短剧 4 个），变量名必须和 API 的 inputs 键一致。</li><li><strong>LLM 节点</strong>：模型供应商选 Ollama / OpenAI-API-compatible，指向本机 <code>qwen3:4b</code>；把 DSL 里的 system / user 提示词复制进去。</li><li><strong>代码节点</strong>：语言 python3，贴 DSL 里的 <code>code</code>，按 <code>outputs</code> 声明 4 个输出变量与类型，绑定上游变量。</li><li><strong>HTTP 请求节点</strong>：POST、URL 指向本机 8765、headers 加 <code>Content-Type: application/json</code>、body 选 json 并引用代码节点的 <code>request_json</code>。</li><li><strong>结束节点</strong>：加 plan / generate_result / summary / task_count 四个输出。</li><li>连线 → 点「运行」测一次 → 「发布」→ 右上角「访问 API」拿 Key，把域名和 Key 填进调用示例。</li></ol><div class="note warm"><span class="nt">导入后 LLM 节点标红是正常的</span>DSL 里写的是 <code>provider: ollama / name: qwen3:4b</code>，和你本机装的名字不一定一样。点进去重选一次模型就好，其他节点不用动。</div></section><section id="demo"><h2><span class="n">09</span>两个 HTML Demo 怎么接上这条链路</h2><div class="tw"><table><thead><tr><th>Demo</th><th>接入点</th><th>勾选「接入本地工作流」后</th><th>服务没启动时</th></tr></thead><tbody><tr><td>电商素材工作台</td><td>生成参数面板 →「批量生成」</td><td>先 POST 工作流 API，用返回的 plan.tasks 展开队列，日志显示回包里的 engine 与任务数</td><td>自动回退内置编排，界面照常可用，状态灯显示「未连接」</td></tr><tr><td>短剧自动化工作台</td><td>剧本面板 →「解析为结构化分镜」</td><td>POST 工作流 API，用 plan.shots 覆盖镜头墙，强制 ≤5s 与 re-anchor 状态同步</td><td>回退到内置示例分镜，不影响后续审片 / 续跑演示</td></tr></tbody></table></div><div class="note good"><span class="nt">为什么一定要做「失败回退」</span>端侧产品没有云端兜底，任何一环不通都不能把界面卡死——这本身就是文档 ③ 的产品策略。所以 Demo 里接 API 是<strong>增强</strong>而不是<strong>依赖</strong>：老师在没启动服务的电脑上双击打开，原型依然是完整可点的。</div></section><section id="map"><h2><span class="n">10</span>这一层怎么回应题干的「账号 / 授权 / 算力调度」</h2><div class="tw"><table><thead><tr><th>题干里的词</th><th>落到哪个接口 / 模块</th><th>具体机制</th></tr></thead><tbody><tr><td>账号</td><td>API 的 <code>user</code> 字段 / Dify 终端用户</td><td>隔离运行记录与产物归属；同一 user 才能查到自己的回包</td></tr><tr><td>授权</td><td>应用 API Key（Bearer）+ 本地服务仅回环</td><td>Key 只存服务端；端侧再加一层本机模型许可审查（文档 ① 的 Apache 2.0 判断）</td></tr><tr><td>算力调度</td><td>单执行槽队列、优先级、中断、checkpoint</td><td>文档 ③ 的状态机 + <code>/stop</code> 接口 + Demo 的 P0 插队 / 从 checkpoint 续跑</td></tr><tr><td>本地大模型</td><td>Ollama Qwen3-4B + ComfyUI Z-Image / Qwen-Image</td><td>文档 ① 的量化档位与显存账，DSL 里的 engine 字段与之严格一致</td></tr></tbody></table></div><div class="note "><span class="nt">这层补充在作业里的定位</span>老师要的仍是<strong>三份文档 + 一个 demo × 两套</strong>。这一层作为 Demo 的「可运行后端」附在后面，既没有把文档数量改乱，又把题干里最容易被忽略的「接入 API」补成了能验证的实物。</div></section><section id="qa"><h2><span class="n">11</span>老师可能追问什么</h2><div class="grid"><div class="card"><div class="ct">「Dify 不就是云端的吗？」</div><div class="cb">用自部署社区版（Docker），和创作应用跑在同一台主机；DSL 里所有 URL 都是回环地址。用 Dify Cloud 就违反题设，这一点我主动排除了。</div></div><div class="card"><div class="ct">「为什么不用 Dify 自带的结构化输出？」</div><div class="cb">端侧小模型未必原生支持，退化后仍可能吐不合规 JSON；且 1.14.0 有已知静默失效问题。所以用提示词约束 + 代码节点校验 + 本地规则兜底三层保证。</div></div><div class="card"><div class="ct">「这个 API 真能出图吗？」</div><div class="cb">默认模式不能，也不假装能：它是编排层验证器，验证需求 → 结构化任务 → 本机队列 → 回包这条链路。真机用 --engine local 接 ComfyUI /prompt 就出像素；我另外做了 DEV ONLY 的联网开发通道，在没有显卡的机器上能出真图，但它不属于作业正式方案、也没有任何自动上云的兜底分支。</div></div><div class="card"><div class="ct">「和 ComfyUI 的 API 什么关系？」</div><div class="cb">Dify 管业务编排（拆任务），ComfyUI 管像素生成（跑推理），中间用本机 HTTP 串起来，是上下游不是替代关系。</div></div><div class="card"><div class="ct">「用 RunningHub 跑不是更省事吗？」</div><div class="cb">省事，但它是云端 GPU + 云端 API，接上就等于承认有云端兜底。作业里把它当对照方案主动排除；本机改用 ComfyUI 加载本地权重。真要练手，只用它设计工作流并导出 JSON 再拿回本机跑。</div></div></div></section><section id="pit"><h2><span class="n">12</span>常见坑与排查</h2><div class="tw"><table><thead><tr><th>现象</th><th>原因</th><th>怎么处理</th></tr></thead><tbody><tr><td>导入后 LLM 节点标红</td><td>模型名 / 供应商与本机不一致</td><td>点进节点重选 Ollama 或 OpenAI-API-compatible 的本地模型</td></tr><tr><td>Docker 里 HTTP 节点连接超时</td><td>容器里的 127.0.0.1 指向容器自己</td><td>URL 用 host.docker.internal，服务用 --host 0.0.0.0 启动</td></tr><tr><td>浏览器 fetch 被拦</td><td>CORS / Private Network 策略</td><td>服务已带 CORS 与 Private Network 响应头，已在 Chrome 下实测 file:// 页面直连可用；个别浏览器仍拦就用 python3 -m http.server 打开</td></tr><tr><td>想接 RunningHub 出图</td><td>它是云端 ComfyUI，违反题设</td><td>改用本机 ComfyUI 加载本地权重；云端最多只用来设计 / 导出工作流 JSON，不参与推理</td></tr><tr><td>JSON 解析失败</td><td>小模型输出带了 Markdown 围栏或多了解释</td><td>代码节点已去围栏并准备本地规则兜底，不会崩链</td></tr><tr><td>结构化输出开关失效</td><td>Dify 版本差异 / 已知 issue</td><td>本方案本来就不依赖该开关</td></tr><tr><td>Demo 状态灯一直「未连接」</td><td>服务没启动或端口被占</td><td>双击 .command 启动；或 --port 9000 并同步改 Demo 里的端口常量</td></tr></tbody></table></div></section><section id="files"><h2><span class="n">13</span>本目录文件清单</h2><div class="tw"><table><thead><tr><th>文件</th><th>作用</th><th>要不要交给老师</th></tr></thead><tbody><tr><td>文档4_Dify工作流与API接入说明.html</td><td>就是本页：架构、节点、契约、示例、红线、排查</td><td>要，作为 Demo 的说明</td></tr><tr><td>Dify_电商素材工作流.yml</td><td>可导入 Dify 的电商工作流 DSL</td><td>要</td></tr><tr><td>Dify_短剧自动化工作流.yml</td><td>可导入 Dify 的短剧工作流 DSL</td><td>要</td></tr><tr><td>local_api_server.py</td><td>零依赖本地编排服务，真实可跑；默认 mock，可切 --engine local / cloud</td><td>要（附一句「默认离线编排层验证器」说明）</td></tr><tr><td>engine_drivers.py</td><td>三驱动出图引擎：mock / 本机 ComfyUI / DEV ONLY 联网演示</td><td>要（说明默认离线即可）</td></tr><tr><td>启动本地服务.command</td><td>macOS 双击启动（默认纯离线），方便课堂演示</td><td>可选</td></tr><tr><td>outputs/</td><td>开发演示模式下真实图片的落盘目录</td><td>演示后才有，不必交</td></tr><tr><td>runtime_state.json</td><td>服务运行时自动生成的运行记录（演示后才有）</td><td>不用交</td></tr></tbody></table></div><div class="note good"><span class="nt">最小演示路径（30 秒）</span>① 双击 <code>启动本地服务.command</code> → ② 打开任一 Demo，勾选「接入本地工作流」→ ③ 电商点「批量生成」/ 短剧点「解析为结构化分镜」→ ④ 看日志里出现「工作流回包」和队列任务数 → ⑤ 关掉服务再点一次，看它自动回退、界面不崩。</div></section>
+<footer>端侧 AI Studio · AI 产品测试题作业交付 · 全部推理在本地完成，无云端兜底<br>生成日期：2026-11-04</footer>
+</div>
+</body>
+</html>
