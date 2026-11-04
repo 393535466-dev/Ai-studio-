@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.aistudio.video8766</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>__PROJECT_ROOT__/06_视频API接入_演示增强/video_api_adapter.py</string>
+    <string>--serve</string>
+    <string>8766</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__PROJECT_ROOT__/06_视频API接入_演示增强</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/tmp/aistudio-8766.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/aistudio-8766.err.log</string>
+</dict>
+</plist>

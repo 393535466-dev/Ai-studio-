@@ -429,6 +429,27 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError) as e:
             return self._json({"error": "invalid json", "detail": str(e)}, 400)
 
+        if path == "/engine/switch":
+            # 页面内显式切换出图引擎，免开终端改启动参数。
+            # 默认仍为 mock（作业正式方案）；cloud 必须由用户主动点击才开启，
+            # 绝不自动转云，cloud_fallback 恒为 False。
+            want = str(data.get("engine") or "")
+            if want not in ("mock", "local", "cloud"):
+                return self._json({"ok": False, "error": "engine must be mock | local | cloud"}, 400)
+            CFG["engine"] = want
+            return self._json({
+                "ok": True,
+                "engine": CFG["engine"],
+                "dev_only": CFG["engine"] == "cloud",
+                "local_only": CFG["engine"] != "cloud",
+                "cloud_fallback": False,
+                "note": ("端侧正式方案：不加载权重、不产出像素、不发外网请求"
+                         if want == "mock" else
+                         "DEV ONLY 演示增强：联网出真图（Pollinations 零密钥），不计入作业正文"
+                         if want == "cloud" else
+                         "本机 ComfyUI 推理，需先导出 workflow_api.json 并启动 8188"),
+            })
+
         if path == "/v1/workflows/run":
             return self._json(run_workflow(data))
 

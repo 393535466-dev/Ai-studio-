@@ -195,6 +195,30 @@ footer{background:var(--chalk);border-top:1px solid var(--ink);padding:32px 40px
 .redline{max-width:720px;font-size:11px;line-height:1.8;color:var(--graphite);border-left:2px solid var(--ink);padding-left:16px}
 .redline b{color:var(--ink)}
 
+/* ---- demo gate : 本地演示门禁（非真实身份认证） ---- */
+.gate{position:fixed;inset:0;z-index:80;background:var(--putty);display:flex;align-items:center;justify-content:center;padding:24px}
+.gate[hidden]{display:none}
+.gate-card{width:min(430px,100%);background:var(--paper);border:1px solid var(--ink);border-radius:var(--r-card);padding:32px 32px 26px}
+.gate-top{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--vellum);padding-bottom:16px;margin-bottom:22px}
+.gate-top .lm{width:34px;height:34px;flex:none}
+.gate-card h2{font-family:var(--font-display);font-size:27px;font-weight:500;letter-spacing:-.2px;line-height:1.2;margin:0 0 6px}
+.gate-card .lede{font-size:11.5px;color:var(--graphite);line-height:1.7;margin:0 0 22px}
+.gate-card .field{margin-bottom:14px}
+.gate-card label{display:block;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--graphite);margin-bottom:6px}
+.gate-card input{width:100%;height:38px;border:1px solid var(--vellum);border-radius:var(--r-card);padding:0 12px;font-size:13px;background:var(--paper);outline:none}
+.gate-card input:focus{border-color:var(--ink)}
+.gate-btn{width:100%;height:44px;border:1px solid var(--ink);border-radius:var(--r-btn);background:var(--ink);color:var(--paper);font-size:11px;letter-spacing:.14em;margin-top:8px}
+.gate-btn:hover{background:var(--graphite)}
+.gate-msg{font-size:11px;line-height:1.6;min-height:18px;margin-top:10px}
+.gate-foot{border-top:1px solid var(--vellum);margin-top:20px;padding-top:14px;font-size:10.5px;line-height:1.75;color:var(--graphite)}
+.gate-foot b{color:var(--ink)}
+
+/* ---- engine switch : 页面内切换，免开终端 ---- */
+.engine-row{display:flex;gap:6px;flex-wrap:wrap}
+.engine-row button{flex:1;min-width:88px;border:1px solid var(--vellum);background:var(--paper);border-radius:var(--r-btn);height:30px;font-size:10px;letter-spacing:.05em}
+.engine-row button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.engine-state{font-size:10.5px;line-height:1.6;color:var(--graphite);margin-top:9px;word-break:break-word}
+
 @media(max-width:980px){
   .layout{grid-template-columns:1fr;padding:20px 20px 48px}
   .side{position:static}
@@ -206,6 +230,22 @@ footer{background:var(--chalk);border-top:1px solid var(--ink);padding:32px 40px
 </style>
 </head>
 <body>
+
+<div class="gate" id="gate" hidden>
+  <div class="gate-card">
+    <div class="gate-top">
+      <svg class="lm" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="none" stroke="#000" stroke-width="1.2"/><text x="16" y="22" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#000">A</text></svg>
+      <div><div class="wordmark" style="font-size:22px">Atelier<em>.</em></div><span class="micro">AI STUDIO / PRIVATE DESK</span></div>
+    </div>
+    <h2>Sign in to the atelier.</h2>
+    <p class="lede">一间把推理留在本地的工作室。登录后即可运行两套场景的工作流，查看分镜预演、任务队列与视频样片。</p>
+    <div class="field"><label>Account / 账号</label><input id="gateUser" autocomplete="off" placeholder="输入账号"></div>
+    <div class="field"><label>Password / 密码</label><input id="gatePass" type="password" autocomplete="off" placeholder="输入密码"></div>
+    <button class="gate-btn" id="gateBtn">ENTER / 进入工作台</button>
+    <div class="gate-msg" id="gateMsg"></div>
+    <div class="gate-foot"><b>DEMO GATE · 演示门禁</b><br>演示账号 <code>666666</code> / 密码 <code>666666</code>。校验只在本浏览器内完成，<b>不是真实身份认证、不是安全边界</b>，请勿把这两个值用于任何真实服务。<br>仅首次打开需要输入，之后自动记住；答辩直达链接 <code>?autorun=1</code> 会跳过本页。</div>
+  </div>
+</div>
 
 <header class="masthead">
   <div class="mh-left">
@@ -271,9 +311,15 @@ footer{background:var(--chalk);border-top:1px solid var(--ink);padding:32px 40px
       </div>
       <label class="checkline"><input type="checkbox" id="rememberKey" checked> 记住密钥到本浏览器</label>
       <button class="cmdbtn" id="clearKeys">CLEAR KEYS / 清除已存密钥</button>
-      <p class="tiny">密钥只写入浏览器 localStorage，不上传服务器、不写进 GitHub 仓库。Dify 接口已实测允许跨域，线上页面同样可跑。</p>
-      <button class="cmdbtn" id="showCmd">BACKEND / 查看启动命令</button>
-      <div class="cmdbox" id="cmdBox">双击本目录 <b>启动工作台后端.command</b> 可一次拉起两个服务；或手动执行：<br><code>python3 ../03_Dify工作流与API接入/local_api_server.py --engine cloud --max-images 1</code><br><code>python3 ../06_视频API接入_演示增强/video_api_adapter.py --serve 8766</code></div>
+      <p class="tiny"><b>零密钥也能用</b>：演示模式、分镜预演与 Shot List 全程不需要任何 Key。这两个 Key 只是调用外部云端 API 的通行证（不是登录凭证），只在选「Dify 云端工作流」或重新生成视频时才需要；密钥只存本浏览器 localStorage。</p>
+      <button class="cmdbtn" id="showCmd">BACKEND / 查看后台服务说明</button>
+      <div class="cmdbox" id="cmdBox">本地服务已装成 <b>macOS 开机自启的后台服务</b>，正常不用打开终端、也不用填密钥。只有迁移电脑或手动调试才需要手动执行：<br><code>python3 ../03_Dify工作流与API接入/local_api_server.py --engine mock --port 8765</code><br><code>python3 ../06_视频API接入_演示增强/video_api_adapter.py --serve 8766</code></div>
+      <div style="margin-top:16px">
+        <div class="micro" style="margin-bottom:8px">Engine / 出图引擎 · 页面内切换，无需终端</div>
+        <div class="engine-row" id="engineRow"></div>
+        <div class="engine-state" id="engineState">正在检测 8765 服务…</div>
+      </div>
+      <button class="cmdbtn" id="gateSignout" style="margin-top:14px">SIGN OUT / 重新测试登录</button>
     </section>
 
   </aside>
@@ -399,7 +445,7 @@ const STEPS = [
 ];
 
 const STORE = "ai_studio_workbench_v1";
-let state = {scene:"ecom", mode:"demo", inputs:{}, keys:{ecom:"",drama:""}, rhKey:"", remember:true, last:{}};
+let state = {scene:"ecom", mode:"demo", engine:"mock", inputs:{}, keys:{ecom:"",drama:""}, rhKey:"", remember:true, last:{}};
 let busy = false, videoBusy = false, pipeTimer = null, service = {local:false, video:false};
 
 function load(){
@@ -877,8 +923,80 @@ async function generateVideo(){
   }
 }
 
+/* ---------------- 演示门禁：本地校验，非真实身份认证 ---------------- */
+const GATE_USER = "666666", GATE_PASS = "666666", GATE_KEY = "ai_studio_gate_v1";
+function gateBypass(){
+  const q = new URLSearchParams(location.search);
+  return q.get("autorun") === "1" || q.get("guest") === "1";
+}
+function gateSigned(){
+  try{
+    const v = JSON.parse(localStorage.getItem(GATE_KEY) || "null");
+    return !!(v && v.ok && (Date.now() - v.at) < 30 * 864e5);
+  }catch(e){ return false; }
+}
+function gateShow(msg){
+  const g = $("#gate"); if(!g) return;
+  g.hidden = false;
+  $("#gateMsg").textContent = msg || "";
+  setTimeout(() => { const u = $("#gateUser"); if(u) u.focus(); }, 60);
+}
+function gateEnter(){
+  const u = ($("#gateUser").value || "").trim(), p = $("#gatePass").value || "";
+  if(u === GATE_USER && p === GATE_PASS){
+    try{ localStorage.setItem(GATE_KEY, JSON.stringify({ok:true, at:Date.now()})); }catch(e){}
+    $("#gate").hidden = true; $("#gateMsg").textContent = "";
+  }else{
+    $("#gateMsg").textContent = "账号或密码不对，演示账号是 666666 / 666666。";
+  }
+}
+function gateLogout(){
+  try{ localStorage.removeItem(GATE_KEY); }catch(e){}
+  $("#gateUser").value = ""; $("#gatePass").value = "";
+  gateShow("已退出，可重新测试登录。");
+}
+
+/* ---------------- 出图引擎：页面内切换，免开终端 ---------------- */
+const ENGINES = [{id:"mock",name:"端侧 MOCK"},{id:"cloud",name:"联网 CLOUD"},{id:"local",name:"COMFYUI"}];
+function renderEngines(){
+  const box = $("#engineRow"); if(!box) return;
+  box.innerHTML = ENGINES.map(e =>
+    '<button data-engine="' + e.id + '" class="' + (state.engine === e.id ? "on" : "") + '">' + e.name + '</button>').join("");
+  $$("#engineRow button").forEach(b => b.onclick = () => switchEngine(b.dataset.engine));
+}
+async function loadEngine(){
+  const box = $("#engineState"); if(!box) return;
+  try{
+    const r = await fetch("http://127.0.0.1:8765/health").then(x => x.json());
+    state.engine = r.engine_mode || "mock";
+    renderEngines();
+    box.textContent = "服务在线 · 当前 " + state.engine + (r.dev_only ? "（DEV ONLY，不计入作业正文）" : "（端侧正式方案）") + "。切换后重跑工作流即生效。";
+  }catch(e){
+    renderEngines();
+    box.textContent = location.protocol === "https:"
+      ? "线上页面按浏览器安全策略无法连本机服务；本地打开工作台即可切换引擎。"
+      : "8765 未在线：演示模式与分镜预演不依赖后端；装好后台服务后会自动常驻。";
+  }
+}
+async function switchEngine(id){
+  const box = $("#engineState");
+  try{
+    const r = await postJSON("http://127.0.0.1:8765/engine/switch", {engine:id}, {});
+    if(!r.ok) throw new Error(r.error || "切换失败");
+    state.engine = r.engine; renderEngines();
+    box.textContent = "已切到 " + r.engine + " · " + r.note;
+    alertBox(r.dev_only ? "warn" : "ok", "出图引擎已切到 <b>" + esc(r.engine) + "</b>。" +
+      (r.dev_only ? "这是 DEV ONLY 演示增强，联网出真图（Pollinations 零密钥），不计入作业正文。" : "端侧正式方案，重跑工作流即可生效。"));
+  }catch(e){
+    box.textContent = "切换失败：" + e.message + "。请确认后台服务已启动。";
+  }
+}
+
 /* ---------------- 事件绑定 ---------------- */
 function bind(){
+  $("#gateBtn").onclick = gateEnter;
+  ["#gateUser", "#gatePass"].forEach(s => $(s).onkeydown = e => { if(e.key === "Enter") gateEnter(); });
+  $("#gateSignout").onclick = gateLogout;
   $$(".scene-link").forEach(el => el.onclick = ev => {
     ev.preventDefault();
     state.scene = el.dataset.scene; save();
@@ -929,6 +1047,8 @@ else{
 }
 if(location.protocol === "https:") setLight("#lightDify", true, "Dify Cloud · Ready");
 probeServices();
+loadEngine();
+if(!gateBypass() && !gateSigned()) gateShow("");
 // 演示直达：给老师发 ?autorun=1 的链接，打开即自动跑一次
 // 也可用 ?mode=local|dify|demo 指定运行模式，便于复现与验收
 if(qs.get("autorun") === "1"){
