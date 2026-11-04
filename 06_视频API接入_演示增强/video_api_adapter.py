@@ -49,7 +49,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 # --------------------------------------------------------------------------
 # 供应商适配表
@@ -453,9 +453,39 @@ def generate(prompt, provider="siliconflow", model=None, image_url=None,
 
 
 class Handler(BaseHTTPRequestHandler):
+    """浏览器工作台直连入口：CORS 预检 + JSON 回包（含显式降级原因）。
+
+    页面从 file:// 或 https:// 打开时，POST application/json 会先发 OPTIONS
+    预检；没有 do_OPTIONS 会被浏览器直接拦下，页面表现为「服务明明开着却调不通」。
+    """
+
+    def _cors(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
+
+    def _json(self, obj, code=200):
+        body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self._cors()
+        self.end_headers()
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._cors()
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_POST(self):
-        if self.path.rstrip("/") not in ("/api/video/generate", "/api/video"):
-            self.send_error(404)
+        if self.path.split("?")[0].rstrip("/") not in ("/api/video/generate", "/api/video"):
+            self._json({"error": "unknown path", "path": self.path}, 404)
             return
         n = int(self.headers.get("Content-Length", 0) or 0)
         try:
@@ -473,27 +503,18 @@ class Handler(BaseHTTPRequestHandler):
             aspect_ratio=inp.get("aspect_ratio", "16:9"), base=inp.get("base"),
             node_info=inp.get("node_info"), task_id=inp.get("task_id"),
         )
-        body = json.dumps(result, ensure_ascii=False).encode("utf-8")
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(body)
+        self._json(result)
 
     def do_GET(self):
         if self.path.startswith("/health"):
-            body = json.dumps({
+            self._json({
                 "ok": True, "providers": list(PROVIDERS),
                 "keys_configured": {k: bool(os.environ.get(v["env_key"]))
                                     for k, v in PROVIDERS.items()},
-            }, ensure_ascii=False).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(body)
+                "endpoints": ["GET /health", "POST /api/video/generate"],
+            })
         else:
-            self.send_error(404)
+            self._json({"error": "unknown path", "path": self.path}, 404)
 
     def log_message(self, *args):
         pass
@@ -524,7 +545,9 @@ def main():
         log("POST /api/video/generate | GET /health")
         log("已配置的 Key：%s" % ", ".join(k for k, v in PROVIDERS.items()
                                           if os.environ.get(v["env_key"])) or "无（将显式降级）")
-        HTTPServer(("127.0.0.1", args.serve), Handler).serve_forever()
+        srv = ThreadingHTTPServer(("127.0.0.1", args.serve), Handler)
+        srv.daemon_threads = True
+        srv.serve_forever()
         return
 
     result = generate(

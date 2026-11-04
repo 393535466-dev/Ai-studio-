@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Studio · Visual Studio — 端侧视觉创作工作台</title>
+<style>
+:root{
+  --putty:#c4c3b6;--ink:#000000;--bone:#e7e5e4;--chalk:#ebebeb;
+  --vellum:#dfdcd5;--graphite:#595855;--ash:#808080;--paper:#ffffff;
+  --font-display:"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,"Songti SC","STSong","Noto Serif CJK SC",serif;
+  --font-ui:"Helvetica Neue",Helvetica,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --r-card:9px;--r-btn:28.8px;--r-link:2px;
+  --hair:1px solid var(--vellum);
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--putty);color:var(--ink);font-family:var(--font-ui);font-size:13px;line-height:1.55}
+button,select,input,textarea{font-family:inherit;font-size:12px;color:var(--ink)}
+button{cursor:pointer;transition:none}
+button:disabled{opacity:.38;cursor:not-allowed}
+a{color:var(--ink);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;background:var(--chalk);border:1px solid var(--vellum);border-radius:var(--r-link);padding:1px 5px}
+::selection{background:var(--ink);color:var(--paper)}
+
+/* ---- typography utilities ---- */
+.micro{font-size:9px;letter-spacing:.16em;text-transform:uppercase;font-weight:500;color:var(--graphite);line-height:1.4}
+.serif{font-family:var(--font-display);font-weight:500;letter-spacing:-.009em}
+.hex{width:12px;height:12px;flex:none;vertical-align:-1px}
+
+/* ---- masthead : logo mark + single text link, no chrome ---- */
+.masthead{background:var(--putty);border-bottom:1px solid var(--ink);padding:16px 40px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+.mh-left{display:flex;align-items:center;gap:12px}
+.logomark{width:32px;height:32px;flex:none}
+.wordmark{font-family:var(--font-display);font-size:30px;font-weight:500;letter-spacing:-.009em;line-height:1}
+.wordmark em{font-style:italic}
+.mh-nav{margin-left:auto;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.scene-link{display:flex;align-items:baseline;gap:7px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid transparent;padding-bottom:2px}
+.scene-link span{font-size:10px;letter-spacing:0;color:var(--graphite);text-transform:none}
+.scene-link:hover{text-decoration:none;border-bottom-color:var(--graphite)}
+.scene-link.on{border-bottom-color:var(--ink);font-weight:500}
+.scene-link.on span{color:var(--ink)}
+.lights{display:flex;gap:16px;align-items:center;border-left:1px solid var(--vellum);padding-left:22px;flex-wrap:wrap}
+.light{display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;border:1px solid var(--graphite);flex:none}
+.light.ok .dot{background:var(--ink);border-color:var(--ink)}
+.light.bad .dot{background:transparent}
+.ltxt{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--graphite);white-space:nowrap}
+.light.ok .ltxt{color:var(--ink)}
+
+/* ---- hero : serif is the protagonist ---- */
+.hero{padding:30px 40px 34px;border-bottom:var(--hair)}
+.hero-top{display:flex;justify-content:space-between;align-items:baseline;gap:20px;flex-wrap:wrap}
+.hero h1{font-family:var(--font-display);font-size:clamp(38px,5.2vw,60px);font-weight:500;letter-spacing:-.47px;line-height:1;margin:6px 0 8px}
+.hero h1 em{font-style:italic}
+.hero-sub{font-size:14px;color:var(--graphite);margin:0}
+.hero-stats{display:flex;gap:28px;flex-wrap:wrap;align-items:baseline}
+.hero-stats span{font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+
+/* ---- layout : edge to edge, no centered container ---- */
+.layout{padding:28px 40px 64px;display:grid;grid-template-columns:320px minmax(0,1fr);gap:20px;align-items:start}
+.side{display:flex;flex-direction:column;gap:20px;position:sticky;top:78px;max-height:calc(100vh - 96px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--vellum) transparent;padding-right:2px}
+.main{display:flex;flex-direction:column;gap:20px;min-width:0}
+.panel,.card{background:var(--bone);border:1px solid var(--vellum);border-radius:var(--r-card);padding:24px}
+.eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.eyebrow .micro{color:var(--graphite)}
+.panel h3,.card h3{font-family:var(--font-display);font-size:23px;font-weight:500;letter-spacing:-.13px;line-height:1.25;margin:0 0 18px}
+.cardhead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.cardhead h3{margin:0}
+.head-left .eyebrow{margin-bottom:4px}
+.head-note{font-size:11px;color:var(--graphite);text-align:right;line-height:1.5}
+
+/* ---- pills / badges (monochrome only) ---- */
+.pill{display:inline-block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--ink);border-radius:var(--r-btn);padding:4px 11px;white-space:nowrap;background:transparent;color:var(--ink)}
+.pill.ink{background:var(--ink);color:var(--paper)}
+.tag{font-size:9px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--vellum);border-radius:var(--r-btn);padding:2px 9px;color:var(--graphite)}
+
+/* ---- mode selector ---- */
+.modes{display:flex;flex-direction:column;gap:6px}
+.mode{display:flex;gap:10px;align-items:flex-start;text-align:left;padding:11px 12px;border:1px solid var(--vellum);border-radius:var(--r-card);background:transparent}
+.mode:hover{border-color:var(--ink)}
+.mode.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.mode.on .mode-desc,.mode.on .mode-name small{color:#c9c9c9}
+.mode .radio{width:12px;height:12px;border:1px solid var(--graphite);border-radius:50%;flex:none;margin-top:3px}
+.mode.on .radio{border-color:var(--paper);background:var(--paper)}
+.mode-name{display:block;font-size:12px;font-weight:500;letter-spacing:.02em}
+.mode-name small{font-weight:400;color:var(--graphite);font-size:10px;margin-left:6px;letter-spacing:.08em}
+.mode-desc{display:block;font-size:10.5px;color:var(--graphite);line-height:1.5;margin-top:3px}
+.hint,.tiny{font-size:10.5px;color:var(--graphite);line-height:1.6;margin:12px 0 0}
+.muted{color:var(--graphite)}
+
+/* ---- form ---- */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--graphite);font-weight:500;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:8px 10px;border:1px solid var(--vellum);border-radius:var(--r-link);background:var(--chalk);outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink);outline:1px solid var(--ink);outline-offset:-1px}
+.field textarea{resize:vertical;min-height:78px;line-height:1.55}
+.keyrow{display:flex;gap:6px}
+.keyrow input{flex:1;min-width:0;font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chalk);border:1px solid var(--vellum);border-radius:var(--r-link);padding:8px 10px;outline:none}
+.keyrow input:focus{border-color:var(--ink)}
+.keyrow button{border:1px solid var(--ink);background:transparent;border-radius:var(--r-btn);padding:0 12px;font-size:10px;letter-spacing:.06em}
+.keyrow button:hover{background:var(--ink);color:var(--paper)}
+.checkline{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--graphite);margin-top:10px}
+.checkline input{margin:0;accent-color:var(--ink)}
+.cmdbtn{margin-top:12px;width:100%;text-align:left;border:1px solid var(--vellum);background:transparent;border-radius:var(--r-btn);padding:7px 14px;font-size:10px;letter-spacing:.06em;line-height:1.5;white-space:normal}
+.cmdbtn:hover{border-color:var(--ink)}
+.cmdbox{display:none;margin-top:10px;font-size:10.5px;color:var(--graphite);line-height:1.8}
+.cmdbox code{display:inline-block;margin:2px 0;word-break:break-all}
+
+/* ---- action buttons ---- */
+.btn-run{background:var(--ink);color:var(--paper);border:1px solid var(--ink);border-radius:var(--r-btn);font-size:12px;letter-spacing:.1em;padding:11px 18px;width:100%;font-weight:500}
+.btn-run:hover{background:var(--graphite);border-color:var(--graphite)}
+.btn-run:disabled:hover{background:var(--ink);border-color:var(--ink)}
+.btn-run small{display:block;font-size:9px;letter-spacing:.04em;opacity:.65;font-weight:400;margin-top:2px}
+.btn-ghost{width:100%;background:transparent;border:1px solid var(--ink);border-radius:var(--r-btn);padding:9px 16px;font-size:11px;letter-spacing:.06em}
+.btn-ghost:hover{background:var(--ink);color:var(--paper)}
+
+/* ---- alert : flat monochrome ---- */
+.alert{display:none;border-radius:var(--r-card);padding:12px 16px;font-size:11.5px;line-height:1.65}
+.alert.show{display:block}
+.alert.err{background:var(--ink);color:var(--paper);border:1px solid var(--ink)}
+.alert.warn{background:var(--chalk);border:1px solid var(--ink);border-left:3px solid var(--ink)}
+.alert.ok{background:var(--bone);border:1px solid var(--vellum);border-left:3px solid var(--ink)}
+.alert b{font-weight:600}
+
+/* ---- pipeline ---- */
+.pipeline{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:2px}
+.step{flex:1;min-width:104px;position:relative;text-align:center}
+.step .box{border:1px solid var(--vellum);background:var(--putty);border-radius:var(--r-card);padding:10px 5px;margin:0 5px}
+.step .box b{display:block;font-size:11.5px;font-weight:500}
+.step .box small{display:block;font-size:9px;color:var(--graphite);letter-spacing:.06em;margin-top:2px}
+.step .arrow{position:absolute;right:-3px;top:50%;transform:translateY(-50%);color:var(--graphite);font-size:13px;z-index:2}
+.step:last-child .arrow{display:none}
+.step.active .box{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.step.active .box small{color:#c9c9c9}
+.step.done .box{border-color:var(--ink)}
+.step.done .box b:before{content:"● ";font-size:8px;vertical-align:1px}
+.step.fail .box{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.step.fail .box small{color:#c9c9c9}
+.step.fail .box b:after{content:" / ERROR";font-size:8px;letter-spacing:.1em}
+.stats{display:flex;gap:0;flex-wrap:wrap;margin-top:18px;border-top:1px solid var(--vellum);padding-top:12px}
+.chip{border-right:1px solid var(--vellum);padding:0 20px;margin-right:20px;line-height:1.35}
+.chip:last-child{border-right:0;margin-right:0}
+.chip span{display:block;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--graphite)}
+.chip b{display:block;font-size:15px;font-weight:500;letter-spacing:-.01em;margin-top:2px}
+
+/* ---- canvas : the Ink Room ---- */
+.canvas{background:var(--ink);border:1px solid var(--ink);border-radius:var(--r-card);padding:20px;min-height:220px;display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:16px}
+.empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8b8b86;min-height:176px;text-align:center;gap:10px;font-size:11.5px;letter-spacing:.02em}
+.empty svg{opacity:.5}
+.empty .micro{color:#8b8b86}
+.item{background:var(--ink);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-card);overflow:hidden;display:flex;flex-direction:column}
+.item .thumb{height:98px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;color:var(--paper);font-family:var(--font-display);font-size:22px;letter-spacing:-.01em}
+.item .thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.item .thumb .badge{position:absolute;left:9px;top:9px;border:1px solid rgba(255,255,255,.45);color:var(--paper);font-family:var(--font-ui);font-size:8.5px;letter-spacing:.12em;padding:2px 7px;border-radius:var(--r-btn);background:rgba(0,0,0,.35)}
+.item .body{padding:11px 12px 13px}
+.item .body b{display:block;font-size:11.5px;font-weight:500;color:var(--paper);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .body p{margin:0;font-size:10.5px;color:#a8a8a2;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.item .meta span{font-size:9px;letter-spacing:.04em;color:#c9c9c4;border:1px solid rgba(255,255,255,.22);border-radius:var(--r-btn);padding:2px 7px}
+.keyframes{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.kf{width:104px;text-align:center}
+.kf img{width:92px;height:92px;border-radius:50%;object-fit:cover;display:block;margin:0 auto;background:var(--ash);border:1px solid var(--vellum)}
+.kf span{display:block;font-size:9px;letter-spacing:.06em;color:var(--graphite);margin-top:6px;line-height:1.4;word-break:break-all}
+
+/* ---- motion study ---- */
+.videowrap{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:24px;align-items:start}
+.videobox{background:var(--ink);border:1px solid var(--ink);border-radius:var(--r-card);overflow:hidden}
+.videobox video{width:100%;display:block;max-height:340px;background:var(--ink)}
+.videoside .micro{margin-bottom:8px}
+.videoside p{font-size:11px;color:var(--graphite);line-height:1.65;margin:0 0 14px}
+.vstate{margin-top:12px;font-size:10.5px;line-height:1.6;color:var(--graphite);word-break:break-word;border-top:1px solid var(--vellum);padding-top:10px}
+
+details.raw summary{font-family:var(--font-display);font-size:20px;font-weight:500;letter-spacing:-.13px;outline:none;cursor:pointer;list-style:none}
+details.raw summary::-webkit-details-marker{display:none}
+details.raw summary:before{content:"+ ";font-family:var(--font-ui);font-size:14px}
+details.raw[open] summary:before{content:"− "}
+details.raw pre{background:var(--ink);color:#d6d6d2;border-radius:var(--r-card);padding:16px;overflow:auto;max-height:320px;font-size:11px;line-height:1.55;margin:16px 0 0}
+
+/* ---- footer ---- */
+footer{background:var(--chalk);border-top:1px solid var(--ink);padding:32px 40px 48px}
+.foot-in{display:flex;gap:32px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.foot-title{font-family:var(--font-display);font-size:30px;font-weight:500;letter-spacing:-.2px;line-height:1.1;margin:0}
+.redline{max-width:720px;font-size:11px;line-height:1.8;color:var(--graphite);border-left:2px solid var(--ink);padding-left:16px}
+.redline b{color:var(--ink)}
+
+@media(max-width:980px){
+  .layout{grid-template-columns:1fr;padding:20px 20px 48px}
+  .side{position:static}
+  .masthead,.hero{padding-left:20px;padding-right:20px}
+  .videowrap{grid-template-columns:1fr}
+  .lights{width:100%;margin-left:0;border-left:0;padding-left:0}
+  footer{padding:28px 20px 40px}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="mh-left">
+    <svg class="logomark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="none" stroke="#000" stroke-width="1.2"/><text x="16" y="22" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#000">A</text></svg>
+    <div class="wordmark">Atelier<em>.</em></div>
+    <span class="micro" style="margin-left:6px">AI STUDIO</span>
+  </div>
+  <div class="mh-nav">
+    <nav class="scene-links" style="display:flex;gap:24px">
+      <a class="scene-link on" data-scene="ecom" href="#">Commerce<span>电商素材</span></a>
+      <a class="scene-link" data-scene="drama" href="#">Episodic<span>短剧自动化</span></a>
+    </nav>
+    <div class="lights">
+      <span class="light" id="lightLocal"><i class="dot"></i><span class="ltxt">Local 8765</span></span>
+      <span class="light" id="lightVideo"><i class="dot"></i><span class="ltxt">Motion 8766</span></span>
+      <span class="light ok" id="lightDify"><i class="dot"></i><span class="ltxt">Dify Cloud</span></span>
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-top">
+    <span class="micro">Studio / 01 &nbsp;·&nbsp; AI Product Design Exercise &nbsp;·&nbsp; 端侧视觉创作工作台</span>
+    <span class="micro">Est. 2026</span>
+  </div>
+  <h1>Visual <em>Studio</em>.</h1>
+  <p class="hero-sub">把推理留在本地的一间工作室 —— 选场景、填需求、跑编排、看结果。</p>
+  <div class="hero-stats" style="margin-top:20px">
+    <span>Inference&nbsp; On Device</span>
+    <span>No Cloud Fallback</span>
+    <span>Two Scenarios</span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="side">
+
+    <section class="panel">
+      <div class="eyebrow"><svg class="hex" viewBox="0 0 14 14"><path d="M7 1 L12.2 4 L12.2 10 L7 13 L1.8 10 L1.8 4 Z" fill="none" stroke="#595855" stroke-width="1"/></svg><span class="micro">01 / Mode</span></div>
+      <h3>运行模式 <span class="tag" id="sceneTag" style="vertical-align:3px;margin-left:6px">电商素材</span></h3>
+      <div class="modes" id="modes"></div>
+      <button class="btn-run" id="runBtn" style="margin-top:16px">RUN WORKFLOW<small>运行工作流</small></button>
+      <button class="btn-ghost" id="stopBtn" style="margin-top:8px" disabled>INTERRUPT / 中断任务</button>
+      <p class="hint" id="modeHint"></p>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow"><svg class="hex" viewBox="0 0 14 14"><path d="M7 1 L12.2 4 L12.2 10 L7 13 L1.8 10 L1.8 4 Z" fill="none" stroke="#595855" stroke-width="1"/></svg><span class="micro">02 / Input</span></div>
+      <h3>任务参数</h3>
+      <div id="form"></div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow"><svg class="hex" viewBox="0 0 14 14"><path d="M7 1 L12.2 4 L12.2 10 L7 13 L1.8 10 L1.8 4 Z" fill="none" stroke="#595855" stroke-width="1"/></svg><span class="micro">03 / Credentials</span></div>
+      <h3>连接设置 <span class="pill" style="vertical-align:3px;margin-left:6px">Local Only</span></h3>
+      <div class="field">
+        <label>Dify App Key · <span id="keyScene">电商素材</span></label>
+        <div class="keyrow"><input type="password" id="difyKey" placeholder="app- 开头，从「访问 API」复制" autocomplete="off"><button id="eyeDify">显示</button></div>
+      </div>
+      <div class="field">
+        <label>RunningHub Key · Optional</label>
+        <div class="keyrow"><input type="password" id="rhKey" placeholder="32 位，仅生成视频时需要" autocomplete="off"><button id="eyeRh">显示</button></div>
+      </div>
+      <label class="checkline"><input type="checkbox" id="rememberKey" checked> 记住密钥到本浏览器</label>
+      <button class="cmdbtn" id="clearKeys">CLEAR KEYS / 清除已存密钥</button>
+      <p class="tiny">密钥只写入浏览器 localStorage，不上传服务器、不写进 GitHub 仓库。Dify 接口已实测允许跨域，线上页面同样可跑。</p>
+      <button class="cmdbtn" id="showCmd">BACKEND / 查看启动命令</button>
+      <div class="cmdbox" id="cmdBox">双击本目录 <b>启动工作台后端.command</b> 可一次拉起两个服务；或手动执行：<br><code>python3 ../03_Dify工作流与API接入/local_api_server.py --engine cloud --max-images 1</code><br><code>python3 ../06_视频API接入_演示增强/video_api_adapter.py --serve 8766</code></div>
+    </section>
+
+  </aside>
+
+  <main class="main">
+    <div class="alert" id="alert"></div>
+
+    <section class="card">
+      <div class="cardhead">
+        <div class="head-left"><div class="eyebrow"><span class="micro">04 / Orchestration</span></div><h3>执行链路</h3></div>
+        <span class="pill ink" id="modeBadge">演示模式</span>
+      </div>
+      <div class="pipeline" id="pipeline"></div>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="card">
+      <div class="cardhead">
+        <div class="head-left"><div class="eyebrow"><span class="micro">05 / Composition</span></div><h3 id="canvasTitle">画布</h3></div>
+        <div class="head-note" id="canvasMeta">尚未运行<br><span class="micro">Awaiting Input</span></div>
+      </div>
+      <div class="canvas" id="canvas"></div>
+      <div class="keyframes" id="keyframes"></div>
+    </section>
+
+    <section class="card">
+      <div class="cardhead">
+        <div class="head-left"><div class="eyebrow"><span class="micro">06 / Motion Study</span></div><h3>视频预演</h3></div>
+        <span class="pill">Cloud Control · 不进作业正文</span>
+      </div>
+      <div class="videowrap">
+        <div class="videobox">
+          <video id="video" controls playsinline poster="../06_视频API接入_演示增强/demo_output/corgi_poster.png">
+            <source id="vsrc" src="../06_视频API接入_演示增强/demo_output/corgi_clip.mp4" type="video/mp4">
+            浏览器不支持内嵌播放
+          </video>
+        </div>
+        <div class="videoside">
+          <div class="micro">Plate No. 01</div>
+          <p>默认样片：<b>柯基叼棉花糖</b>，h264 / 832×480 / 5.06s。点下方按钮可用当前剧本重新生成，约 2~3 分钟。</p>
+          <button class="btn-ghost" id="videoBtn">GENERATE / 生成新视频</button>
+          <div class="vstate" id="videoState">视频服务状态检测中…</div>
+        </div>
+      </div>
+    </section>
+
+    <details class="card raw">
+      <summary>07 / Raw Telemetry — 原始输出 JSON</summary>
+      <pre id="rawJson">尚未运行工作流。</pre>
+    </details>
+  </main>
+</div>
+
+<footer>
+  <div class="foot-in">
+    <div>
+      <div class="micro" style="margin-bottom:8px">An Exercise In Constraint</div>
+      <p class="foot-title">THE ATELIER<br>IS LOCAL.</p>
+      <div class="micro" style="margin-top:14px">AI STUDIO / 2026 · ON-DEVICE INFERENCE</div>
+    </div>
+    <div class="redline"><b>红线标注：</b>作业正式方案为「全部推理在本地、无云端兜底」，本地编排服务的 <code>mock</code> / <code>local</code> 引擎与 16GB 无显卡机器的显式降级口径见文档5。本页的 <b>Dify 云端工作流</b> 与 <b>RunningHub 视频</b> 属于演示增强 / 云端对照实验，仅用于验证「放开算力约束后，队列状态机与降级策略能原样复用」，<b>不计入 3 文档 + 1 Demo 的作业正文</b>。</div>
+  </div>
+</footer>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const $$ = s => Array.prototype.slice.call(document.querySelectorAll(s));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------------- 场景定义（与云端 DSL 的 start 节点一一对齐） ---------------- */
+const SCENES = {
+  ecom: {
+    label:"电商素材", canvasTitle:"SKU 任务画布", unit:"SKU",
+    fields:[
+      {k:"product_name",label:"商品名称 / Product",type:"text",ph:"例：无线降噪耳机"},
+      {k:"style",label:"场景风格 / Style",type:"select",opts:["极简白棚","暖调生活场景","户外自然光","节日促销"]},
+      {k:"size",label:"输出尺寸 / Format",type:"select",opts:["1:1 主图","3:4 详情图","9:16 封面"]},
+      {k:"sku_count",label:"SKU 数量 / Count",type:"select",opts:["1","3","6"]},
+      {k:"candidates",label:"每 SKU 候选数 / Candidates",type:"select",opts:["2","4","6"]},
+      {k:"brief",label:"补充说明 / Brief",type:"textarea"}
+    ],
+    defaults:{product_name:"无线降噪耳机",style:"极简白棚",size:"1:1 主图",sku_count:"3",candidates:"4",brief:"用于电商主图测试，主体形状与 LOGO 需与原始商品锚图一致。"}
+  },
+  drama: {
+    label:"短剧自动化", canvasTitle:"分镜故事板", unit:"镜头",
+    fields:[
+      {k:"script",label:"剧本文本 / Script",type:"textarea"},
+      {k:"shot_count",label:"分镜上限 / Shots",type:"select",opts:["4","6","8"]},
+      {k:"resolution",label:"输出档位 / Resolution",type:"select",opts:["480p 预演","720p 终稿"]},
+      {k:"anchor_lock",label:"角色锚定 / Anchor",type:"select",opts:["每镜头 re-anchor（推荐）","关闭（会产生身份漂移）"]}
+    ],
+    defaults:{script:"深夜，一只穿黄色雨衣的柯基在天台用望远镜找外卖。外卖员竟是一只骑着扫地机器人的鹦鹉，送来全城最后一串烤豆皮。一人一鸟为豆皮展开慢动作决斗，决斗到一半，全城路灯突然变成巨型棉花糖，柯基叼起棉花糖飘走了。",shot_count:"4",resolution:"480p 预演",anchor_lock:"每镜头 re-anchor（推荐）"}
+  }
+};
+
+const MODES = [
+  {id:"demo",  name:"演示模式", en:"Preview", desc:"零配置 · 浏览器内模拟 5 节点编排，答辩最稳"},
+  {id:"local", name:"本地编排服务", en:"On Device", desc:"127.0.0.1:8765 · 端侧正式链路，可真出图"},
+  {id:"dify",  name:"Dify 云端工作流", en:"Cloud", desc:"api.dify.ai · 需填 app- 密钥，线上也能跑"}
+];
+const MODE_HINT = {
+  demo:"不调用任何外部服务，直接生成结构化编排结果，用于演示产品流程与降级策略。",
+  local:"需要本机启动 03_Dify工作流与API接入/local_api_server.py。从 https 线上页面访问本机 http 服务会被浏览器拦截，请下载后用本地文件打开。",
+  dify:"直接调用你已发布的 Dify 工作流（开始→LLM→代码校验→HTTP→结束）。密钥不写进代码，只存在本浏览器。"
+};
+const STEPS = [
+  {b:"开始",s:"INPUT"},
+  {b:"LLM 拆解",s:"PLANNING"},
+  {b:"代码校验",s:"BOUNDARY"},
+  {b:"HTTP 出图",s:"QUEUE"},
+  {b:"结束",s:"OUTPUT"}
+];
+
+const STORE = "ai_studio_workbench_v1";
+let state = {scene:"ecom", mode:"demo", inputs:{}, keys:{ecom:"",drama:""}, rhKey:"", remember:true, last:{}};
+let busy = false, videoBusy = false, pipeTimer = null, service = {local:false, video:false};
+
+function load(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(STORE) || "{}");
+    state.scene = SCENES[raw.scene] ? raw.scene : "ecom";
+    state.mode = MODES.some(m => m.id === raw.mode) ? raw.mode : "demo";
+    state.remember = raw.remember !== false;
+    state.keys = Object.assign({ecom:"",drama:""}, raw.keys || {});
+    state.rhKey = raw.rhKey || "";
+    state.inputs = raw.inputs || {};
+    state.last = raw.last || {};
+  }catch(e){ /* 存储损坏则用默认值 */ }
+  for(const k of Object.keys(SCENES)){
+    state.inputs[k] = Object.assign({}, SCENES[k].defaults, state.inputs[k] || {});
+  }
+  if(!state.remember){ state.keys = {ecom:"",drama:""}; state.rhKey = ""; }
+}
+function save(){
+  try{
+    localStorage.setItem(STORE, JSON.stringify({
+      scene:state.scene, mode:state.mode, remember:state.remember,
+      keys:state.remember ? state.keys : {ecom:"",drama:""},
+      rhKey:state.remember ? state.rhKey : "",
+      inputs:state.inputs, last:state.last
+    }));
+  }catch(e){}
+}
+
+/* ---------------- 渲染静态骨架 ---------------- */
+function renderModes(){
+  $("#modes").innerHTML = MODES.map(m =>
+    '<button class="mode' + (state.mode === m.id ? " on" : "") + '" data-mode="' + m.id + '">' +
+    '<i class="radio"></i><span><span class="mode-name">' + m.name + '<small>' + m.en + '</small></span>' +
+    '<span class="mode-desc">' + m.desc + '</span></span></button>').join("");
+  $$(".mode").forEach(el => el.onclick = () => {
+    state.mode = el.dataset.mode; save(); renderModes(); updateModeHint();
+  });
+  $("#modeBadge").textContent = MODES.find(m => m.id === state.mode).name;
+  $("#modeBadge").className = "pill " + (state.mode === "local" ? "ink" : "");
+}
+function updateModeHint(){ $("#modeHint").textContent = MODE_HINT[state.mode]; }
+function renderForm(){
+  const sc = SCENES[state.scene];
+  $("#sceneTag").textContent = sc.label;
+  $("#keyScene").textContent = sc.label;
+  $("#canvasTitle").textContent = sc.canvasTitle;
+  $("#form").innerHTML = sc.fields.map(f => {
+    const v = state.inputs[state.scene][f.k] || "";
+    let ctrl;
+    if(f.type === "select"){
+      ctrl = '<select data-k="' + f.k + '">' + f.opts.map(o =>
+        '<option value="' + esc(o) + '"' + (String(v) === String(o) ? " selected" : "") + '>' + esc(o) + '</option>').join("") + '</select>';
+    }else if(f.type === "textarea"){
+      ctrl = '<textarea data-k="' + f.k + '" placeholder="' + esc(f.ph || "") + '">' + esc(v) + '</textarea>';
+    }else{
+      ctrl = '<input data-k="' + f.k + '" value="' + esc(v) + '" placeholder="' + esc(f.ph || "") + '">';
+    }
+    return '<div class="field"><label>' + esc(f.label) + '</label>' + ctrl + '</div>';
+  }).join("");
+  $$("#form [data-k]").forEach(el => {
+    const handler = () => { state.inputs[state.scene][el.dataset.k] = el.value; save(); };
+    el.oninput = handler; el.onchange = handler;
+  });
+  $("#difyKey").value = state.keys[state.scene] || "";
+}
+function renderPipeline(){
+  $("#pipeline").innerHTML = STEPS.map((s,i) =>
+    '<div class="step" data-i="' + i + '"><div class="box"><b>' + s.b + '</b><small>' + s.s + '</small></div>' +
+    (i < STEPS.length - 1 ? '<span class="arrow">›</span>' : '') + '</div>').join("");
+}
+function setPipe(n, cls){
+  $$(".step").forEach((el,i) => {
+    el.className = "step" + (i < n ? " " + (cls || "done") : "");
+  });
+}
+function animatePipeline(){
+  clearInterval(pipeTimer);
+  let i = 0;
+  pipeTimer = setInterval(() => { i = Math.min(i + 1, 3); setPipe(i + 1, "active"); }, 420);
+}
+function collectInputs(){ return Object.assign({}, state.inputs[state.scene]); }
+
+/* ---------------- 提示 ---------------- */
+function alertBox(type, html){
+  const el = $("#alert");
+  el.className = "alert show " + type;
+  el.innerHTML = html;
+}
+function clearAlert(){ $("#alert").className = "alert"; $("#alert").innerHTML = ""; }
+function friendlyNetworkError(url, err){
+  const https = location.protocol === "https:";
+  if(https && url.indexOf("http://127.0.0.1") === 0){
+    return "线上 HTTPS 页面无法直连本机 <code>http://127.0.0.1</code>（浏览器混合内容 / 私有网络限制）。请把 <b>07_产品工作台/index.html</b> 下载到本地双击打开，或使用「Dify 云端工作流」模式。";
+  }
+  return "连不上 <code>" + esc(url) + "</code>：服务未启动、端口不对，或请求被浏览器拦截。原始错误：" + esc(err && err.message || err);
+}
+
+/* ---------------- 服务探测 ---------------- */
+async function ping(url){
+  try{
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), 2200);
+    const r = await fetch(url + "/health", {signal:c.signal});
+    clearTimeout(t);
+    return r.ok;
+  }catch(e){ return false; }
+}
+function setLight(id, ok, text){
+  const el = $(id);
+  el.className = "light " + (ok ? "ok" : "bad");
+  const t = el.querySelector(".ltxt");
+  if(text && t) t.textContent = text;
+}
+async function probeServices(){
+  const [a,b] = await Promise.all([ping("http://127.0.0.1:8765"), ping("http://127.0.0.1:8766")]);
+  service.local = a; service.video = b;
+  setLight("#lightLocal", a, a ? "Local 8765 · Online" : "Local 8765 · Offline");
+  setLight("#lightVideo", b, b ? "Motion 8766 · Online" : "Motion 8766 · Offline");
+  let vs = b ? "视频服务在线 ✓ 填入 RunningHub 密钥即可重新生成。" : "视频服务未启动。样片仍可播放；要重新生成请双击本目录的「启动工作台后端.command」。";
+  if(location.protocol === "https:" && !b){
+    vs = "线上页面可播样片；重新生成需本地打开工作台并启动 8766 服务。";
+  }
+  $("#videoState").textContent = vs;
+  if(!a && state.mode === "local"){
+    alertBox("warn", "当前选的是<b>本地编排服务</b>，但 8765 没探测到。请启动后端，或切到「演示模式」/「Dify 云端工作流」。");
+  }
+}
+
+/* ---------------- 三种运行通道 ---------------- */
+async function postJSON(url, body, headers){
+  let r;
+  try{
+    r = await fetch(url, {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, headers || {}), body:JSON.stringify(body)});
+  }catch(e){ throw new Error(friendlyNetworkError(url, e)); }
+  const txt = await r.text();
+  let d;
+  try{ d = JSON.parse(txt); }catch(e){ throw new Error("服务返回的不是 JSON（HTTP " + r.status + "）：" + txt.slice(0,180)); }
+  if(!r.ok){
+    const msg = (d && (d.msg || d.message || d.error)) || txt.slice(0,180);
+    throw new Error("HTTP " + r.status + " · " + msg);
+  }
+  return d;
+}
+
+async function runDemo(scene, inputs){
+  for(let i = 1; i <= 5; i++){ setPipe(i, "active"); await sleep(150); }
+  const plan = scene === "ecom" ? demoEcom(inputs) : demoDrama(inputs);
+  const items = scene === "ecom" ? plan.tasks : plan.shots;
+  return {
+    task_id:"demo-" + Date.now(), workflow_run_id:"demo-run",
+    data:{id:"demo-run", status:"succeeded", total_steps:5, total_tokens:0, elapsed_time:0.75, error:null,
+      outputs:{plan:JSON.stringify(plan), summary:"演示模式：5 节点编排已在浏览器内完成，未加载权重、未产出像素、未发出任何外部请求。",
+        task_count:items.length, shot_count:scene === "drama" ? items.length : 0,
+        images:"[]", images_produced:0, engine_mode:"mock", local_only:true},
+      sample_images:[]}
+  };
+}
+function demoEcom(inp){
+  const n = Math.min(12, parseInt(inp.sku_count || 3, 10) || 3);
+  const c = parseInt(inp.candidates || 4, 10) || 4;
+  const tasks = [];
+  for(let i = 0; i < n; i++){
+    tasks.push({sku:"SKU-" + String(i+1).padStart(2,"0"),
+      name:inp.product_name + " · " + inp.style + " · SKU-" + String(i+1).padStart(2,"0"),
+      style:inp.style, size:inp.size, candidates:c, count:c, seed:1000 + i*37,
+      engine:"Z-Image-Turbo Q5", anchor_lock:true,
+      prompt:"product photo of " + inp.product_name + ", " + inp.style + ", anchored reference, clean composition"});
+  }
+  return {plan_id:"ecom-demo-" + Date.now(), scene:"ecom", engine:"Z-Image-Turbo Q5", text_model:"Qwen3-4B (Ollama)",
+    anchor_lock:true, quality_gate:"主体形状 / LOGO / 配色与原始商品锚图一致",
+    fallback:"1024→768 → 候选数减半 → 排队 → 取消（无云端兜底）", local_only:true, cloud_fallback:false, tasks:tasks};
+}
+function demoDrama(inp){
+  const n = Math.min(12, parseInt(inp.shot_count || 4, 10) || 4);
+  const lines = String(inp.script || "").split(/[。！？\n]/).map(s => s.trim()).filter(Boolean);
+  const scenes = ["中景","近景","全景","过肩","特写","空镜"];
+  const fill = ["两人对视，情绪克制","人物缓步走入画面","手中物件特写，光线偏冷","回头，欲言又止","城市灯光在远处虚化","沉默，镜头微推"];
+  const shots = [];
+  for(let i = 0; i < n; i++){
+    shots.push({scene:scenes[i % scenes.length], action:(lines[i] || fill[i % fill.length]).slice(0,42),
+      dur:Math.min(5, 3 + i % 3), camera:i % 2 === 0 ? "固定" : "缓推",
+      prompt:"cinematic still, character anchored reference, 9:16",
+      identity_ref:"原始角色锚图", stage:"keyframe",
+      re_anchor:String(inp.anchor_lock || "").indexOf("关闭") < 0, resolution:inp.resolution});
+  }
+  return {plan_id:"drama-demo-" + Date.now(), scene:"drama", engine:"Z-Image-Turbo Q5",
+    boundary:"竖屏 9:16 / 单镜头 ≤5s / 图先行 / I2V 5 帧段（无云端兜底）",
+    characters:["（由 LLM 从剧本抽取）"], re_anchor:true, local_only:true, cloud_fallback:false, shots:shots};
+}
+
+async function runLocal(scene, inputs){
+  const body = {inputs:Object.assign({}, inputs, {scene:scene}), user:"studio-web", generate_images:"1"};
+  return postJSON("http://127.0.0.1:8765/v1/workflows/run", body, {});
+}
+async function runDify(scene, inputs){
+  const key = (state.keys[scene] || "").trim();
+  if(!key) throw new Error("请先在左侧填入 <b>" + SCENES[scene].label + "</b> 对应的 Dify 应用密钥（<code>app-</code> 开头）。密钥在应用「访问入口 → API 密钥」里创建，且应用必须已发布。");
+  if(key.indexOf("app-") !== 0) throw new Error("密钥格式看起来不对：应是 <code>app-</code> 开头。<code>sk-</code> 开头的是模型供应商密钥，不能用来调用工作流。");
+  return postJSON("https://api.dify.ai/v1/workflows/run",
+    {inputs:inputs, response_mode:"blocking", user:"studio-web"},
+    {"Authorization":"Bearer " + key});
+}
+
+/* ---------------- 结果归一化与渲染 ---------------- */
+function jparse(v, fallback){
+  if(v == null) return fallback;
+  if(typeof v === "object") return v;
+  try{ return JSON.parse(v); }catch(e){ return fallback; }
+}
+function normalize(raw, scene){
+  const d = raw && raw.data ? raw.data : (raw || {});
+  const o = d.outputs || {};
+  const plan = jparse(o.plan || raw.plan, {}) || {};
+  let images = jparse(o.images !== undefined ? o.images : d.sample_images, []);
+  if(!Array.isArray(images)) images = [];
+  images = images.filter(x => x && (x.url || x.fileUrl || x.src));
+  const gen = jparse(o.generate_result || o.generateResult, {});
+  return {
+    status:d.status || "succeeded", plan:plan,
+    items:(scene === "ecom" ? plan.tasks : plan.shots) || [],
+    images:images, summary:o.summary || raw.summary || "",
+    elapsed:d.elapsed_time, tokens:d.total_tokens, steps:d.total_steps || 5,
+    error:d.error, gen:gen, raw:raw
+  };
+}
+/* 纯色平面：不使用渐变、不使用饱和色，遵循画廊式单色系统 */
+const TONES = ["#000000","#3a3936","#595855","#262522","#4a4a48","#1c1b1a","#6b6a65","#2f2e2b"];
+function renderResult(scene, mode, raw){
+  const r = normalize(raw, scene);
+  const sc = SCENES[scene];
+  setPipe(5, r.status === "succeeded" ? "done" : "fail");
+  const modeName = MODES.find(m => m.id === mode).name;
+  $("#stats").innerHTML = [
+    ['Status', esc(r.status)], ['Mode', esc(modeName)], [sc.unit, r.items.length],
+    ['Latency', r.elapsed != null ? Number(r.elapsed).toFixed(2) + "s" : "—"],
+    ['Tokens', r.tokens != null ? r.tokens : "—"], ['Nodes', r.steps],
+    ['Plates', r.images.length]
+  ].map(p => '<span class="chip"><span>' + p[0] + '</span><b>' + p[1] + '</b></span>').join("");
+  $("#canvasMeta").innerHTML = (r.plan.plan_id ? esc(r.plan.plan_id) : "已返回结果") + '<br><span class="micro">Plan / Output</span>';
+
+  if(!r.items.length){
+    $("#canvas").innerHTML = '<div class="empty"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg><span class="micro">No Plates Yet</span>工作流返回成功，但没有可展示的任务卡片，可展开下方 Raw Telemetry 查看回包。</div>';
+  }else{
+    $("#canvas").innerHTML = r.items.map((it,i) => {
+      const img = r.images[i];
+      const thumb = img ? '<img src="' + esc(img.url || img.fileUrl || img.src) + '" alt="出图结果" loading="lazy" onerror="this.style.display=\'none\'">' : "";
+      const label = scene === "ecom" ? (it.sku || "SKU-" + (i+1)) : ("Shot " + String(i+1).padStart(2,"0"));
+      const title = scene === "ecom" ? (it.name || it.sku || label) : (it.scene || "镜头") + " · " + (it.dur || 5) + "s";
+      const desc = scene === "ecom" ? (it.style + " / " + it.size + " / 候选 " + (it.candidates || it.count || "—")) : (it.action || it.prompt || "");
+      const tags = scene === "ecom"
+        ? [it.engine || "Z-Image-Turbo Q5", "锚图锁定", "seed " + (it.seed || "—")]
+        : [it.camera || "固定", "≤5s 边界", it.stage === "keyframe" ? "图先行" : (it.stage || "关键帧")];
+      return '<div class="item"><div class="thumb" style="background:' + TONES[i % TONES.length] + '">' +
+        '<span class="badge">' + esc(label) + '</span>' + (thumb || esc(label)) + '</div>' +
+        '<div class="body"><b title="' + esc(title) + '">' + esc(title) + '</b><p>' + esc(desc) + '</p>' +
+        '<div class="meta">' + tags.map(t => '<span>' + esc(t) + '</span>').join("") + '</div></div></div>';
+    }).join("");
+  }
+  $("#keyframes").innerHTML = r.images.length
+    ? r.images.map((im,i) => '<div class="kf"><img src="' + esc(im.url || im.fileUrl || im.src) + '" alt="关键帧 ' + (i+1) + '"><span>' + esc(im.file || ("Plate " + (i+1))) + '</span></div>').join("")
+    : '<span class="muted tiny">未产出像素：当前为编排层验证 / 端侧降级状态。启动本地服务并切到 <code>--engine cloud</code>（DEV ONLY）或 <code>--engine local</code> 才会真出图。</span>';
+  $("#rawJson").textContent = JSON.stringify(raw, null, 2);
+  state.last[scene] = {raw:raw, mode:mode, at:Date.now()};
+  save();
+  return r;
+}
+
+/* ---------------- 主运行 ---------------- */
+async function run(){
+  if(busy) return;
+  busy = true;
+  clearAlert();
+  $("#runBtn").disabled = true; $("#runBtn").innerHTML = 'RUNNING<small>运行中</small>';
+  $("#stopBtn").disabled = false;
+  renderPipeline(); animatePipeline();
+  const scene = state.scene, mode = state.mode, inputs = collectInputs();
+  const t0 = performance.now();
+  try{
+    let raw;
+    if(mode === "demo") raw = await runDemo(scene, inputs);
+    else if(mode === "local") raw = await runLocal(scene, inputs);
+    else raw = await runDify(scene, inputs);
+    clearInterval(pipeTimer);
+    const r = renderResult(scene, mode, raw);
+    if(r.error){ alertBox("warn", "工作流返回错误：<b>" + esc(typeof r.error === "string" ? r.error : JSON.stringify(r.error)) + "</b>"); }
+    else{
+      const extra = mode === "dify" ? "（DeepSeek 真实调用了 LLM 节点）" : mode === "local" ? "（本机编排服务，端侧链路）" : "（浏览器内模拟，零外部请求）";
+      alertBox("ok", "运行成功：" + r.items.length + " 个" + SCENES[scene].unit + "已排入队列" + extra + "。耗时 " + ((performance.now()-t0)/1000).toFixed(1) + " 秒。" + (r.summary ? "<br><span class='muted'>" + esc(r.summary) + "</span>" : ""));
+    }
+  }catch(e){
+    clearInterval(pipeTimer); setPipe(5, "fail");
+    alertBox("err", "<b>ERROR / 运行失败：</b>" + e.message);
+  }finally{
+    busy = false;
+    $("#runBtn").disabled = false; $("#runBtn").innerHTML = 'RUN WORKFLOW<small>运行工作流</small>';
+    $("#stopBtn").disabled = true;
+  }
+}
+async function stop(){
+  if(state.mode !== "local"){ alertBox("warn", "中断接口由本机编排服务提供，请切到「本地编排服务」模式。"); return; }
+  try{
+    await postJSON("http://127.0.0.1:8765/v1/workflows/demo/stop", {}, {});
+    alertBox("warn", "已发送中断信号：对应 ComfyUI <code>/interrupt</code>，显存释放，已出候选保留。");
+    clearInterval(pipeTimer); setPipe(3, "fail");
+  }catch(e){ alertBox("err", "中断失败：" + e.message); }
+}
+
+/* ---------------- 视频 ---------------- */
+function videoPrompt(){
+  const inp = collectInputs();
+  if(state.scene === "drama"){
+    const last = state.last.drama;
+    let first = "";
+    if(last){ try{ const p = normalize(last.raw,"drama"); if(p.items[0]) first = p.items[0].action || ""; }catch(e){} }
+    return "电影感镜头，竖屏氛围，" + (first || String(inp.script || "").slice(0,60)) + "，柔和夜光，镜头缓慢推近，细节清晰，无文字，高清";
+  }
+  return "专业商品摄影，" + (inp.product_name || "商品") + "，" + (inp.style || "极简白棚") + "，干净构图，柔和影棚光，镜头缓慢环绕，无文字，高清";
+}
+async function generateVideo(){
+  if(videoBusy) return;
+  clearAlert();
+  if(location.protocol === "https:"){
+    alertBox("warn", "线上 HTTPS 页面无法直连本机 8766 服务。<b>样片仍可播放</b>；要重新生成请把 <b>07_产品工作台/</b> 下载到本地、双击「启动工作台后端.command」后用本地文件打开工作台。");
+    return;
+  }
+  const prompt = videoPrompt();
+  const body = {
+    prompt:prompt, provider:"runninghub_workflow",
+    workflow_id:"1970121357323366402",
+    api_key:(state.rhKey || "").trim() || undefined,
+    node_info:[{nodeId:"5",fieldName:"text",fieldValue:prompt}],
+    duration:"4", resolution:"480P", aspect_ratio:"16:9", wait:true
+  };
+  videoBusy = true;
+  const btn = $("#videoBtn"); btn.disabled = true; btn.textContent = "RENDERING / 约 2~3 分钟…";
+  $("#videoState").textContent = "已提交任务，请勿关闭页面。RunningHub 工作流排队 + 渲染通常需要 2~3 分钟。";
+  try{
+    const r = await postJSON("http://127.0.0.1:8766/api/video/generate", body, {});
+    if(r.degraded || r.status === "degraded"){
+      $("#videoState").textContent = "显式降级：" + (r.reason || "未产出视频");
+      alertBox("warn", "视频按红线显式降级：<b>" + esc(r.reason || "未配置服务") + "</b><br>未产生任何成功的云端推理，样片仍可播放。");
+    }else{
+      const url = r.video_url || r.url;
+      if(url){
+        const v = $("#video");
+        $("#vsrc").src = url; v.load();
+        $("#videoState").textContent = "新视频已生成（" + (r.elapsed_s || "?") + " 秒），来源：" + url;
+        alertBox("ok", "新视频生成成功，播放器已切换到本次结果。");
+      }else{
+        $("#videoState").textContent = "任务成功但回包里没有视频 URL，请用返回的 taskId 续查。";
+        alertBox("warn", "任务返回成功但没有 <code>video_url</code>。可用 <code>--task-id</code> 续查，不必重新提交（避免重复扣费）。");
+      }
+    }
+  }catch(e){
+    $("#videoState").textContent = "生成失败：" + e.message;
+    alertBox("err", "<b>ERROR / 视频生成失败：</b>" + e.message);
+  }finally{
+    videoBusy = false; btn.disabled = false; btn.textContent = "GENERATE / 生成新视频";
+  }
+}
+
+/* ---------------- 事件绑定 ---------------- */
+function bind(){
+  $$(".scene-link").forEach(el => el.onclick = ev => {
+    ev.preventDefault();
+    state.scene = el.dataset.scene; save();
+    $$(".scene-link").forEach(t => t.classList.toggle("on", t === el));
+    renderForm(); renderPipeline();
+    $("#difyKey").value = state.keys[state.scene] || "";
+    const last = state.last[state.scene];
+    if(last){ renderResult(state.scene, last.mode, last.raw); $("#canvasMeta").innerHTML = "已恢复上次结果<br><span class='micro'>Restored</span>"; }
+    else{
+      $("#canvas").innerHTML = '<div class="empty"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg><span class="micro">Awaiting Input</span>填好左侧参数，点 RUN WORKFLOW 开始</div>';
+      $("#keyframes").innerHTML = ""; $("#stats").innerHTML = ""; $("#rawJson").textContent = "尚未运行工作流。";
+      $("#canvasMeta").innerHTML = '尚未运行<br><span class="micro">Awaiting Input</span>';
+    }
+    clearAlert();
+  });
+  $("#runBtn").onclick = run;
+  $("#stopBtn").onclick = stop;
+  $("#videoBtn").onclick = generateVideo;
+  $("#difyKey").oninput = e => { state.keys[state.scene] = e.target.value.trim(); save(); };
+  $("#rhKey").oninput = e => { state.rhKey = e.target.value.trim(); save(); };
+  $("#rememberKey").onchange = e => { state.remember = e.target.checked; save(); };
+  $("#clearKeys").onclick = () => {
+    state.keys = {ecom:"",drama:""}; state.rhKey = "";
+    $("#difyKey").value = ""; $("#rhKey").value = "";
+    save(); alertBox("ok", "已从本浏览器清除密钥。");
+  };
+  $("#showCmd").onclick = () => {
+    const b = $("#cmdBox"); b.style.display = b.style.display === "block" ? "none" : "block";
+  };
+  $("#eyeDify").onclick = () => { const i = $("#difyKey"); i.type = i.type === "password" ? "text" : "password"; $("#eyeDify").textContent = i.type === "password" ? "显示" : "隐藏"; };
+  $("#eyeRh").onclick = () => { const i = $("#rhKey"); i.type = i.type === "password" ? "text" : "password"; $("#eyeRh").textContent = i.type === "password" ? "显示" : "隐藏"; };
+}
+
+/* ---------------- 启动 ---------------- */
+load();
+const qs = new URLSearchParams(location.search);
+if(SCENES[qs.get("scene")]) state.scene = qs.get("scene");
+if(MODES.some(m => m.id === qs.get("mode"))) state.mode = qs.get("mode");
+renderModes(); updateModeHint(); renderForm(); renderPipeline(); bind();
+$$(".scene-link").forEach(t => t.classList.toggle("on", t.dataset.scene === state.scene));
+$("#rhKey").value = state.rhKey;
+$("#rememberKey").checked = state.remember;
+const init = state.last[state.scene];
+if(init){ renderResult(state.scene, init.mode, init.raw); $("#canvasMeta").innerHTML = "已恢复上次结果<br><span class='micro'>Restored</span>"; }
+else{
+  $("#canvas").innerHTML = '<div class="empty"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg><span class="micro">Awaiting Input</span>填好左侧参数，点 RUN WORKFLOW 开始</div>';
+}
+if(location.protocol === "https:") setLight("#lightDify", true, "Dify Cloud · Ready");
+probeServices();
+// 演示直达：给老师发 ?autorun=1 的链接，打开即自动跑一次
+// 也可用 ?mode=local|dify|demo 指定运行模式，便于复现与验收
+if(qs.get("autorun") === "1"){
+  if(!MODES.some(m => m.id === qs.get("mode"))){ state.mode = "demo"; renderModes(); updateModeHint(); }
+  setTimeout(run, 350);
+}
+</script>
+</body>
+</html>
