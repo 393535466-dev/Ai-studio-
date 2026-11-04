@@ -108,6 +108,7 @@ RH_ERRORS = {
     "416": "账户余额不足，请充值后重试。",
     "1004": "任务不存在或已过期，请检查 taskId。",
     "1007": "请求参数不合法，按 errorMessage 里的 allowed values 修正。",
+    "1014": "这把是消费级-会员 Key，标准模型 API 仅限企业级-共享 Key 调用。请改用 --provider runninghub_workflow 走工作流 API（会员 Key 可用），或换一把企业级-共享 Key。",
 }
 
 
@@ -144,10 +145,16 @@ def request_with_retry(url, payload, headers, timeout=30):
 
 def pick(d, keys):
     """从不同厂商的响应里兜底取字段（含嵌套 dict / list）。"""
-    for k in keys:
-        if isinstance(d, dict) and k in d and d[k]:
-            return d[k]
-    for v in (d.values() if isinstance(d, dict) else []):
+    if isinstance(d, dict):
+        for k in keys:
+            if k in d and d[k]:
+                return d[k]
+        items = d.values()
+    elif isinstance(d, list):
+        items = d
+    else:
+        return None
+    for v in items:
         if isinstance(v, (dict, list)):
             hit = pick(v, keys)
             if hit:
@@ -338,32 +345,35 @@ def run_runninghub_v2(cfg, headers, prompt, image_url, endpoint, base,
 # 通道 C：RunningHub 工作流 API（body 传 apiKey + workflowId）
 # --------------------------------------------------------------------------
 def run_runninghub_workflow(cfg, key, prompt, workflow_id, image_url, base,
-                            started, save_path, wait):
-    if not workflow_id:
+                            started, save_path, wait, node_info=None, task_id=None):
+    if not workflow_id and not task_id:
         return degraded(
-            "工作流 API 需要 workflowId：请在 RunningHub 打开目标工作流（URL 里那串数字），"
-            "且该工作流必须至少手动成功运行过一次。也可改用 --provider runninghub 走模型 API（不需要 workflowId）。",
+            "工作流 API 需要 workflowId（或 --task-id 续查已有任务）：在 RunningHub 打开目标工作流，"
+            "URL 里那串数字就是 ID。也可改用 --provider runninghub 走模型 API（不需要 workflowId）。",
             {"stage": "config", "how_to_get": "https://www.runninghub.ai/#/workflow/<WORKFLOW_ID>"},
         )
-    node_info = []
-    create_payload = {"apiKey": key, "workflowId": workflow_id}
-    if node_info:
-        create_payload["nodeInfoList"] = node_info
-    url = base.rstrip("/") + cfg["create_endpoint"]
-    log("[1/3] create -> %s" % url)
-    try:
-        created = request_with_retry(url, create_payload, {"Content-Type": "application/json"})
-    except Exception as e:
-        return degraded("创建工作流任务失败：%s" % e, {"stage": "create"})
-    if created.get("code") not in (0, None):
-        return degraded("创建任务被拒：code=%s msg=%s" % (created.get("code"), created.get("msg")),
-                        {"stage": "create", "raw": json.dumps(created, ensure_ascii=False)[:400]})
-    data = created.get("data") or {}
-    task_id = data.get("taskId") if isinstance(data, dict) else None
-    if not task_id:
-        return degraded("创建响应里没拿到 taskId，请核对工作流是否已发布 / apiKey 类型是否匹配。",
-                        {"stage": "create", "raw": json.dumps(created, ensure_ascii=False)[:400]})
-    log("  taskId = %s" % task_id)
+    if task_id:
+        log("[1/3] 复用已有 taskId = %s（不重新提交、不重复扣费）" % task_id)
+    else:
+        node_info = node_info or []
+        create_payload = {"apiKey": key, "workflowId": workflow_id}
+        if node_info:
+            create_payload["nodeInfoList"] = node_info
+        url = base.rstrip("/") + cfg["create_endpoint"]
+        log("[1/3] create -> %s" % url)
+        try:
+            created = request_with_retry(url, create_payload, {"Content-Type": "application/json"})
+        except Exception as e:
+            return degraded("创建工作流任务失败：%s" % e, {"stage": "create"})
+        if created.get("code") not in (0, None):
+            return degraded("创建任务被拒：code=%s msg=%s" % (created.get("code"), created.get("msg")),
+                            {"stage": "create", "raw": json.dumps(created, ensure_ascii=False)[:400]})
+        data = created.get("data") or {}
+        task_id = data.get("taskId") if isinstance(data, dict) else None
+        if not task_id:
+            return degraded("创建响应里没拿到 taskId，请核对工作流是否已发布 / apiKey 类型是否匹配。",
+                            {"stage": "create", "raw": json.dumps(created, ensure_ascii=False)[:400]})
+        log("  taskId = %s" % task_id)
     if not wait:
         return {"status": "queued", "degraded": False, "request_id": task_id, "video_url": None}
 
@@ -377,8 +387,15 @@ def run_runninghub_workflow(cfg, key, prompt, workflow_id, image_url, base,
                                     {"Content-Type": "application/json"})
         except Exception as e:
             return degraded("轮询失败：%s" % e, {"stage": "poll", "request_id": task_id})
-        sd = st.get("data") or {}
-        state = str((sd.get("status") if isinstance(sd, dict) else st.get("status")) or "unknown").lower()
+        raw = st.get("data")
+        if isinstance(raw, str):
+            state, sd = raw.lower(), {}
+        elif isinstance(raw, dict):
+            sd = raw
+            state = str(sd.get("status") or st.get("status") or "unknown").lower()
+        else:
+            sd = {}
+            state = str(st.get("status") or "unknown").lower()
         log("  state = %s" % state)
         if state in DONE_OK:
             try:
@@ -403,7 +420,7 @@ def run_runninghub_workflow(cfg, key, prompt, workflow_id, image_url, base,
 def generate(prompt, provider="siliconflow", model=None, image_url=None,
              api_key=None, wait=True, mock=False, endpoint=None, workflow_id=None,
              duration="4", resolution="480P", aspect_ratio="16:9",
-             base=None, save_path=None):
+             base=None, save_path=None, node_info=None, task_id=None):
     """返回结构化结果；调用方可直接把它塞进 Dify 的结束节点。"""
     started = time.time()
     if mock:
@@ -431,7 +448,7 @@ def generate(prompt, provider="siliconflow", model=None, image_url=None,
                                  duration, resolution, aspect_ratio, started, save_path, wait)
     if cfg["dialect"] == "runninghub_workflow":
         return run_runninghub_workflow(cfg, key, prompt, workflow_id, image_url, host,
-                                       started, save_path, wait)
+                                       started, save_path, wait, node_info, task_id)
     return run_standard(cfg, headers, prompt, model, image_url, started, save_path, wait)
 
 
@@ -454,6 +471,7 @@ class Handler(BaseHTTPRequestHandler):
             endpoint=inp.get("endpoint"), workflow_id=inp.get("workflow_id"),
             duration=inp.get("duration", "4"), resolution=inp.get("resolution", "480P"),
             aspect_ratio=inp.get("aspect_ratio", "16:9"), base=inp.get("base"),
+            node_info=inp.get("node_info"), task_id=inp.get("task_id"),
         )
         body = json.dumps(result, ensure_ascii=False).encode("utf-8")
         self.send_response(200)
@@ -493,6 +511,8 @@ def main():
     ap.add_argument("--duration", default="4", help="秒数，以端点允许的枚举为准")
     ap.add_argument("--resolution", default="480P")
     ap.add_argument("--aspect-ratio", default="16:9")
+    ap.add_argument("--node-info", default=None, help="工作流节点覆盖参数的 JSON 字符串")
+    ap.add_argument("--task-id", default=None, help="续查已有任务，不重新提交（避免重复扣费）")
     ap.add_argument("--save", default=None, help="成功后把 MP4 下载到该路径")
     ap.add_argument("--mock", action="store_true", help="强制显式降级，不发外部请求")
     ap.add_argument("--no-wait", action="store_true", help="只提交任务，不轮询")
@@ -513,6 +533,8 @@ def main():
         endpoint=args.endpoint, workflow_id=args.workflow_id,
         duration=args.duration, resolution=args.resolution,
         aspect_ratio=args.aspect_ratio, base=args.base, save_path=args.save,
+        node_info=json.loads(args.node_info) if args.node_info else None,
+        task_id=args.task_id,
     )
     print("\n--- 结构化结果 ---")
     print(json.dumps(result, ensure_ascii=False, indent=2))

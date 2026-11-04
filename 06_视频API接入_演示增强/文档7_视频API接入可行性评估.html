@@ -187,6 +187,15 @@ python3 video_api_adapter.py --serve 8766
 
 <section>
   <h2><span class="n">06</span>RunningHub 实测与 812 排障（2026-11-04）</h2>
+  <div class="note ok"><span class="nt">最终结果：真视频已产出 ✓</span>
+    用<strong>消费级-会员 Key + 工作流 API</strong> 成功跑通并生成 MP4：<code>h264 / 832×480 / 81 帧 / 5.06 秒 / 607 KB</code>，约 160 秒渲染完成。提示词已通过 <code>nodeInfoList</code> 注入成作业里的无厘头剧本（穿黄雨衣的柯基叼着发光棉花糖、雨后天台、城市亮起第一盏灯）。这是<strong>云端对照实验</strong>，只用于验证「放开算力约束后架构能否复用」，不属于端侧作业正文。</div>
+  <div style="margin:14px 0">
+    <video controls playsinline poster="demo_output/corgi_poster.png" style="width:100%;max-width:640px;border-radius:12px;border:1px solid #e3e8ef;background:#000;display:block">
+      <source src="demo_output/corgi_clip.mp4" type="video/mp4">
+      浏览器不支持内嵌播放，可直接打开 demo_output/corgi_clip.mp4
+    </video>
+    <p class="muted">样片：柯基叼棉花糖 · 由 RunningHub 云端 Wan2.2 文生视频工作流生成 · 2026-11-04</p>
+  </div>
   <div class="note info"><span class="nt">背景：这是当初被排除的那一个</span>
     项目最初明确排除了 RunningHub，理由是它是<strong>云端 ComfyUI</strong>，与「全部推理在本地」直接冲突。现在把它放回<strong>演示增强通道</strong>（不进作业正文），用来验证「放开算力约束后架构能否原样复用」——结论是能，只换了驱动。</div>
 
@@ -215,12 +224,15 @@ python3 video_api_adapter.py --serve 8766
     <tr><td>2</td><td>换成一把假 Key 做对照</td><td><code>806 APIKEY_USER_NOT_FOUND</code></td><td><strong>你的 Key 真的有效</strong>（不是免鉴权）</td></tr>
     <tr><td>3</td><td>提交 480P / 4 秒 / 无音频最小任务</td><td><code>812</code>，taskId 空</td><td>任务未创建、<strong>未扣费</strong></td></tr>
     <tr><td>4</td><td>换端点、换参数、换 <code>.cn</code></td><td>全部 <code>812</code></td><td>资金池问题，与代码无关</td></tr>
+    <tr><td>5</td><td>换发<strong>消费级-会员 Key</strong> 调模型 API</td><td><code>1014 Access Denied</code></td><td>会员 Key 只能走工作流 / AI 应用 API</td></tr>
+    <tr><td>6</td><td>会员 Key 调 <code>/task/openapi/create</code></td><td><code>code:0</code> + taskId</td><td><strong>工作流通道可用</strong></td></tr>
+    <tr><td>7</td><td>公开 Wan2.2 文生视频工作流 + 注入提示词</td><td><code>SUCCESS</code> → mp4</td><td><strong>真视频产出</strong>（见本节开头）</td></tr>
   </table>
 
   <h3>两条解法</h3>
   <div class="grid">
     <div class="card"><div class="ct">A · 给团队余额充值（最省事）</div><div class="cb">在「任务与账单 → 钱包 / 充值」确认充值落在<strong>团队 / 企业余额</strong>（不是个人钱包）。充值后<strong>这把 Key 立刻可用</strong>，不用改代码、不用换 Key。密钥页右上角有「API Key 调用权益对比」可核对。</div></div>
-    <div class="card"><div class="ct">B · 换消费级-会员 Key 走工作流 API</div><div class="cb">若你的钱在个人钱包 / RH 币里，可新建一把<strong>「消费级-会员」</strong>Key，改走 <code>/task/openapi/*</code> 工作流通道。代价：需要一个<strong>已保存且手动跑过一次</strong>的视频工作流 ID（工作流页面 URL 里那串数字）。适配器已支持 <code>--provider runninghub_workflow --workflow-id ...</code>。</div></div>
+    <div class="card"><div class="ct">B · 换消费级-会员 Key 走工作流 API（已验证成功 ✓）</div><div class="cb">若你的钱在个人钱包 / RH 币里，可新建一把<strong>「消费级-会员」</strong>Key，改走 <code>/task/openapi/*</code> 工作流通道。代价：需要一个<strong>已保存且手动跑过一次</strong>的视频工作流 ID（工作流页面 URL 里那串数字）。适配器已支持 <code>--provider runninghub_workflow --workflow-id ...</code>。<strong>本轮已实测成功并产出 MP4</strong>，且公开工作流 ID 可直接用，无需用户手动跑一次。</div></div>
   </div>
 
   <h3>适配器命令（余额到位后直接跑）</h3>
@@ -233,11 +245,22 @@ python3 video_api_adapter.py --provider runninghub \
 python3 video_api_adapter.py --provider runninghub \
   --endpoint /openapi/v2/rhart-video-v3.1-lite-official/text-to-video \
   --duration 4 --resolution 720p --base https://www.runninghub.cn \
-  --prompt "..." --save corgi.mp4</code></pre>
+  --prompt "..." --save corgi.mp4
+
+# 会员 Key 走工作流 API（本轮实际成功的那条命令）
+export RUNNINGHUB_API_KEY=你的会员Key
+python3 video_api_adapter.py --provider runninghub_workflow \
+  --workflow-id 1970121357323366402 \
+  --node-info '[{"nodeId":"5","fieldName":"text","fieldValue":"雨后天台，穿黄雨衣的柯基叼着发光棉花糖..."}]' \
+  --save demo_output/corgi_clip.mp4
+
+# 任务已成功但没拿到文件时：复用 taskId 续查，不重新提交、不重复扣费
+python3 video_api_adapter.py --provider runninghub_workflow \
+  --task-id 2117981722906030081 --save demo_output/corgi_clip.mp4</code></pre>
   <div class="note warn"><span class="nt">参数坑（实测）</span>
-    不同模型端点的 <code>duration</code> 枚举不一样：<code>wan-3.0-prime</code> 允许 4，但 <code>rhart-video-v3.1-fast</code> <strong>只允许 8</strong>，写 4 会返回 <code>1007 ... allowed values: 8</code>。适配器已把这类业务错误翻成人话，直接看 <code>reason</code> 即可。</div>
+    不同模型端点的 <code>duration</code> 枚举不一样：<code>wan-3.0-prime</code> 允许 4，但 <code>rhart-video-v3.1-fast</code> <strong>只允许 8</strong>，写 4 会返回 <code>1007 ... allowed values: 8</code>。适配器已把这类业务错误翻成人话，直接看 <code>reason</code> 即可。<br><strong>另外两个实测工程坑</strong>：① <code>/task/openapi/status</code> 的 <code>data</code> 是纯字符串 <code>"RUNNING"/"SUCCESS"</code>，不是对象；② <code>/task/openapi/outputs</code> 的 <code>data</code> 是数组，取 <code>fileUrl</code> 要遍历列表。适配器已两处都修好。</div>
   <div class="note danger"><span class="nt">安全提醒</span>
-    这把 32 位 Key 已经出现在对话里。等演示跑通、余额确认后，建议到密钥页<strong>重置 / 删除并重新生成</strong>一把，只放在本地环境变量里，不要写进任何提交到 GitHub 的文件。本仓库所有代码都只从 <code>RUNNINGHUB_API_KEY</code> 环境变量读取，未硬编码密钥。</div>
+    两把 32 位 Key 都已经出现在对话里。等演示跑通、余额确认后，建议到密钥页<strong>重置 / 删除并重新生成</strong>一把，只放在本地环境变量里，不要写进任何提交到 GitHub 的文件。本仓库所有代码都只从 <code>RUNNINGHUB_API_KEY</code> 环境变量读取，未硬编码密钥。</div>
 </section>
 
 <section>
