@@ -139,6 +139,7 @@
     <tr><td><strong>智谱 CogVideoX-Flash</strong></td><td>异步任务；兼容 OpenAI 风格调用</td><td>公开资料标注为免费模型</td><td><span class="pill p-ok">有免费视频 API</span></td><td><span class="pill p-ok">零成本首选</span> 但需以开放平台实时口径为准，画质/时长有限</td></tr>
     <tr><td><strong>阿里百炼 · 通义万相</strong></td><td>异步，必须带 <code>X-DashScope-Async: enable</code>，task_id 有效 24h</td><td>约 0.25~0.5 元/秒</td><td>新人各模型独立赠送额度（有效期限制）</td><td><span class="pill p-mid">备选</span> 文档最规范，但需 WorkspaceId，配置稍繁</td></tr>
     <tr><td><strong>可灵 / 即梦 / MiniMax / Vidu</strong></td><td>异步 task_id + 轮询</td><td>约 0.3~0.9 元/秒；10 秒片段约 3~9 元</td><td>网页端每日积分 ≠ API 免费额度</td><td><span class="pill p-mid">不建议</span> 画质好但需充值实名，作业演示不划算</td></tr>
+    <tr><td><strong>RunningHub</strong><br><span class="muted">用户已有账号与余额</span></td><td>模型 API：<code>/openapi/v2/{模型}/text-to-video</code> + <code>/openapi/v2/query</code>；工作流 API：<code>/task/openapi/create|status|outputs</code></td><td>按任务计费，480P / 4 秒最省</td><td>新用户赠送 RH 币（个人钱包）</td><td><span class="pill p-mid">有条件可用</span> 模型 API 需「企业级-共享」Key + 团队余额，详见第 06 节实测</td></tr>
     <tr><td><strong>本地 Wan2.2 / LTX（作业正文方案）</strong></td><td>同步本地推理</td><td>0 元，但需 ~24GB 显存</td><td>—</td><td><span class="pill p-no">你的 16GB 机器跑不动</span> 已在文档5 显式降级为分镜故事板 + 关键帧</td></tr>
   </table>
   <p class="muted">※ 上表价格/额度来自公开横评与厂商文档，采集口径可能随时间调整；真正接入前请以控制台定价页为准。作业演示<strong>不依赖任何一家平台的真实计费</strong>。</p>
@@ -156,7 +157,7 @@
 </section>
 
 <section>
-  <h2><span class="n">05</span>选 C 的话，具体改这三处</h2>
+  <h2><span class="n">05</span>选 C 的话，具体改这几处</h2>
   <h3>① 适配器已经写好：<code>video_api_adapter.py</code></h3>
   <p>零依赖（只用 Python 标准库），把「提交 + 轮询 + 取 URL」封装成一个普通 HTTP 接口。默认<strong>不配 key 就显式降级</strong>并返回原因，绝不假装成功 —— 这条跟作业里的降级设计完全一致。</p>
   <pre><code># 零成本看形态，不发任何外部请求
@@ -176,6 +177,7 @@ python3 video_api_adapter.py --serve 8766
     <tr><th>位置</th><th>改法</th></tr>
     <tr><td><code>03_Dify工作流与API接入/engine_drivers.py</code></td><td>在 <code>DRIVERS</code> 里加一个 video 驱动，指向适配器的 <code>/api/video/generate</code>；现有 mock / comfyui / cloud_http 三驱动不动</td></tr>
     <tr><td><code>03_Dify工作流与API接入/local_api_server.py</code></td><td>短剧场景的镜头状态从「视频渲染资格队列」推进到「已提交 / 轮询中 / 已完成」三态，落 <code>runtime_state.json</code>（不丢稿机制已现成）</td></tr>
+    <tr><td><code>06_视频API接入_演示增强/video_api_adapter.py</code></td><td>已内置 <code>runninghub</code> / <code>runninghub_workflow</code> 两种 dialect；<code>PROVIDERS</code> 字典里换端点即可，业务层不用改</td></tr>
     <tr><td><code>05_Dify云端版/</code> 的 <code>API_BASE</code></td><td>云端 Dify 够不到 <code>127.0.0.1</code>，需要 ngrok / cloudflared 公网穿透后把 <code>API_BASE</code> 换成公网地址；或用 <code>--no-wait</code> 只提交任务、结果交给本地队列</td></tr>
   </table>
 
@@ -184,7 +186,62 @@ python3 video_api_adapter.py --serve 8766
 </section>
 
 <section>
-  <h2><span class="n">06</span>成本与风险速算</h2>
+  <h2><span class="n">06</span>RunningHub 实测与 812 排障（2026-11-04）</h2>
+  <div class="note info"><span class="nt">背景：这是当初被排除的那一个</span>
+    项目最初明确排除了 RunningHub，理由是它是<strong>云端 ComfyUI</strong>，与「全部推理在本地」直接冲突。现在把它放回<strong>演示增强通道</strong>（不进作业正文），用来验证「放开算力约束后架构能否原样复用」——结论是能，只换了驱动。</div>
+
+  <h3>真实接口（已实测，非推测）</h3>
+  <table>
+    <tr><th>通道</th><th>鉴权</th><th>提交</th><th>查询</th></tr>
+    <tr><td><strong>模型 API</strong><br><span class="muted">文生视频 / 图生视频</span></td><td>Header <code>Authorization: Bearer &lt;32位Key&gt;</code></td><td><code>POST /openapi/v2/alibaba/wan-3.0-prime/text-to-video</code><br>body: <code>prompt / resolution / aspectRatio / duration / audio</code></td><td><code>POST /openapi/v2/query</code> body <code>{"taskId":"..."}</code>，状态 QUEUED / RUNNING / SUCCESS / FAILED，结果在 <code>results[].url</code></td></tr>
+    <tr><td><strong>工作流 API</strong><br><span class="muted">ComfyUI 工作流</span></td><td>body 里传 <code>apiKey</code>（不是 Header）</td><td><code>POST /task/openapi/create</code>，需 <code>workflowId</code>（工作流须手动跑过一次）</td><td><code>/task/openapi/status</code> + <code>/task/openapi/outputs</code>，输出 <code>fileUrl</code></td></tr>
+  </table>
+  <p class="muted"><code>www.runninghub.ai</code> 与 <code>www.runninghub.cn</code> 两个域名接口均可用、返回一致；<code>bearer</code> 鉴权在国际站/国内站都生效。</p>
+
+  <h3>Key 类型与资金池（812 的根因）</h3>
+  <table>
+    <tr><th>Key 类型</th><th>能调用的 API</th><th>扣哪个钱袋</th></tr>
+    <tr><td>消费级-会员</td><td>工作流 API、AI 应用 API</td><td>个人钱包 / RH 币 / 会员权益</td></tr>
+    <tr><td><strong>企业级-共享</strong><br><span class="muted">用户当前这把（type=shared）</span></td><td><strong>模型 API</strong>、LLM API、工作流 API、AI 应用 API</td><td><strong>团队 / 企业余额（corporate funds）</strong></td></tr>
+    <tr><td>企业级-独占</td><td>需先购买独占机器才能创建</td><td>独占资源</td></tr>
+  </table>
+  <div class="note danger"><span class="nt">实测结论：<code>812 Insufficient corporate funds, please top up</code></span>
+    Key 本身<strong>完全有效</strong>。但<strong>模型 API 只认「企业级-共享」Key 绑定的团队余额</strong>；个人钱包里的 RH 币 / 会员权益<strong>不会自动给这把 Key 用</strong>。所以「我账户里有费用」和「这把 Key 能扣到钱」是两回事。<br>已排除的其它可能：不是参数错、不是端点错、不是站点错 —— 三个不同模型端点 + <code>.ai</code>/<code>.cn</code> 双域名，只要参数合法就一律返回 812；参数不合法时反倒先返回 1007，说明资金检查在参数校验之后。</div>
+
+  <h3>四步排查记录（可复现，均未产生费用）</h3>
+  <table>
+    <tr><th>步骤</th><th>动作</th><th>返回</th><th>结论</th></tr>
+    <tr><td>1</td><td>用不存在的 taskId 查 <code>/openapi/v2/query</code></td><td><code>1004 Task not found</code></td><td>接口格式正确</td></tr>
+    <tr><td>2</td><td>换成一把假 Key 做对照</td><td><code>806 APIKEY_USER_NOT_FOUND</code></td><td><strong>你的 Key 真的有效</strong>（不是免鉴权）</td></tr>
+    <tr><td>3</td><td>提交 480P / 4 秒 / 无音频最小任务</td><td><code>812</code>，taskId 空</td><td>任务未创建、<strong>未扣费</strong></td></tr>
+    <tr><td>4</td><td>换端点、换参数、换 <code>.cn</code></td><td>全部 <code>812</code></td><td>资金池问题，与代码无关</td></tr>
+  </table>
+
+  <h3>两条解法</h3>
+  <div class="grid">
+    <div class="card"><div class="ct">A · 给团队余额充值（最省事）</div><div class="cb">在「任务与账单 → 钱包 / 充值」确认充值落在<strong>团队 / 企业余额</strong>（不是个人钱包）。充值后<strong>这把 Key 立刻可用</strong>，不用改代码、不用换 Key。密钥页右上角有「API Key 调用权益对比」可核对。</div></div>
+    <div class="card"><div class="ct">B · 换消费级-会员 Key 走工作流 API</div><div class="cb">若你的钱在个人钱包 / RH 币里，可新建一把<strong>「消费级-会员」</strong>Key，改走 <code>/task/openapi/*</code> 工作流通道。代价：需要一个<strong>已保存且手动跑过一次</strong>的视频工作流 ID（工作流页面 URL 里那串数字）。适配器已支持 <code>--provider runninghub_workflow --workflow-id ...</code>。</div></div>
+  </div>
+
+  <h3>适配器命令（余额到位后直接跑）</h3>
+  <pre><code>export RUNNINGHUB_API_KEY=你的32位密钥
+python3 video_api_adapter.py --provider runninghub \
+  --duration 4 --resolution 480P --prompt "柯基叼着棉花糖飘过天台" \
+  --save corgi.mp4
+
+# 换便宜端点 / 换国内站
+python3 video_api_adapter.py --provider runninghub \
+  --endpoint /openapi/v2/rhart-video-v3.1-lite-official/text-to-video \
+  --duration 4 --resolution 720p --base https://www.runninghub.cn \
+  --prompt "..." --save corgi.mp4</code></pre>
+  <div class="note warn"><span class="nt">参数坑（实测）</span>
+    不同模型端点的 <code>duration</code> 枚举不一样：<code>wan-3.0-prime</code> 允许 4，但 <code>rhart-video-v3.1-fast</code> <strong>只允许 8</strong>，写 4 会返回 <code>1007 ... allowed values: 8</code>。适配器已把这类业务错误翻成人话，直接看 <code>reason</code> 即可。</div>
+  <div class="note danger"><span class="nt">安全提醒</span>
+    这把 32 位 Key 已经出现在对话里。等演示跑通、余额确认后，建议到密钥页<strong>重置 / 删除并重新生成</strong>一把，只放在本地环境变量里，不要写进任何提交到 GitHub 的文件。本仓库所有代码都只从 <code>RUNNINGHUB_API_KEY</code> 环境变量读取，未硬编码密钥。</div>
+</section>
+
+<section>
+  <h2><span class="n">07</span>成本与风险速算</h2>
   <table>
     <tr><th>项目</th><th>估算</th><th>说明</th></tr>
     <tr><td>4 镜头 × 5 秒，720P</td><td>约 5~18 元</td><td>按 0.25~0.9 元/秒；一次跑通全片够用，反复调试会累加</td></tr>
@@ -196,7 +253,7 @@ python3 video_api_adapter.py --serve 8766
 </section>
 
 <section>
-  <h2><span class="n">07</span>答辩问答（背这两句就够）</h2>
+  <h2><span class="n">08</span>答辩问答（背这两句就够）</h2>
   <div class="note info"><span class="nt">Q：为什么没接视频 API？端侧不是也能调外部服务吗？</span>
     「不能。题干明确<strong>无云端兜底</strong>，视频 API 的算力全在厂商机房，接了就等于推翻 Part1 的选型结论。我的处理是把它<strong>显式降级</strong>为分镜故事板 + 关键帧，视频任务转待办，交付不中断、不静默失败。」</div>
   <div class="note info"><span class="nt">Q：如果给你 24GB 显存 / 放开约束，架构要不要重写？</span>
@@ -204,10 +261,10 @@ python3 video_api_adapter.py --serve 8766
 </section>
 
 <section>
-  <h2><span class="n">08</span>本目录交付清单</h2>
+  <h2><span class="n">09</span>本目录交付清单</h2>
   <div class="grid">
     <div class="card"><div class="ct">文档7_视频API接入可行性评估.html</div><div class="cb">本页：结论、三条红线、三段式链路图、平台对照、路线选择、改动点、成本、答辩口径</div></div>
-    <div class="card"><div class="ct">video_api_adapter.py</div><div class="cb">零依赖异步适配器：submit → 递增轮询 → 取 URL；支持 --mock 显式降级、--serve HTTP 服务、--no-wait 提交即返回</div></div>
+    <div class="card"><div class="ct">video_api_adapter.py</div><div class="cb">零依赖异步适配器：内置 siliconflow / runninghub / runninghub_workflow 三通道；submit → 递增轮询 → 取 URL → 下载 MP4；支持 --mock 显式降级、--serve、--no-wait、--save；业务错误码 812/806 等已翻成人话</div></div>
   </div>
   <div class="note danger"><span class="nt">再强调一次归属</span>
     本目录是<strong>演示增强 / 对照实验</strong>，<strong>不属于作业正文的 3 文档 + 1 Demo</strong>，也不改变文档5 里「16GB 机器显式降级、视频任务转待办」的正式结论。请勿把这两份文件写进提交清单。</div>
