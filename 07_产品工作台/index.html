@@ -164,6 +164,15 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;back
 .kf{width:104px;text-align:center}
 .kf img{width:92px;height:92px;border-radius:50%;object-fit:cover;display:block;margin:0 auto;background:var(--ash);border:1px solid var(--vellum)}
 .kf span{display:block;font-size:9px;letter-spacing:.06em;color:var(--graphite);margin-top:6px;line-height:1.4;word-break:break-all}
+.previz-note{flex:0 0 100%;font-size:10.5px;line-height:1.7;color:var(--graphite);border-left:2px solid var(--ink);padding-left:12px;margin:2px 0 8px}
+.previz-note b{color:var(--ink)}
+.shotlist .tw{overflow:auto;margin-top:14px;border:1px solid var(--vellum);border-radius:var(--r-card)}
+.shotlist table{border-collapse:collapse;width:100%;min-width:820px;font-size:11px}
+.shotlist th,.shotlist td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--vellum);vertical-align:top;line-height:1.55}
+.shotlist th{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--graphite);font-weight:500;background:var(--chalk);white-space:nowrap}
+.shotlist tr:last-child td{border-bottom:0}
+.shotlist td.prompt{color:var(--graphite);max-width:250px}
+.shotlist .tiny{padding:10px 2px 0}
 
 /* ---- motion study ---- */
 .videowrap{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:24px;align-items:start}
@@ -289,6 +298,15 @@ footer{background:var(--chalk);border-top:1px solid var(--ink);padding:32px 40px
       <div class="canvas" id="canvas"></div>
       <div class="keyframes" id="keyframes"></div>
     </section>
+
+    <details class="card raw shotlist" id="shotListWrap" open style="display:none">
+      <summary>Shot List <span class="micro">/ 分镜脚本 · 结构化输出</span></summary>
+      <div class="tw"><table>
+        <thead><tr><th>No.</th><th>Shot type</th><th>Action / 画面动作</th><th>Dur</th><th>Camera</th><th>Anchor</th><th>Prompt / 生成提示词</th><th>Stage</th></tr></thead>
+        <tbody id="shotListBody"></tbody>
+      </table></div>
+      <p class="tiny">这张表由工作流的 <code>plan.shots</code> 直接渲染，是「LLM 拆解 → 代码校验 → 边界约束」的结构化产物；单镜头 ≤5s、竖屏 9:16、图先行、每镜头 re-anchor 到原始角色锚图。表里的画面与上方 PREVIZ 草图一一对应，均为端侧产出，不依赖云端。</p>
+    </details>
 
     <section class="card">
       <div class="cardhead">
@@ -610,6 +628,97 @@ function normalize(raw, scene){
 }
 /* 纯色平面：不使用渐变、不使用饱和色，遵循画廊式单色系统 */
 const TONES = ["#000000","#3a3936","#595855","#262522","#4a4a48","#1c1b1a","#6b6a65","#2f2e2b"];
+/* ---------------- 分镜预演：离线构图草图（非模型像素） ----------------
+   16GB 端侧降级后，短剧 I2V 降级为「关键帧故事板」。故事板本来就该有画面：
+   这里在浏览器内用纯 SVG 画出景别 / 机位 / 时长边界，零联网、零权重，
+   并统一标注 PREVIZ，绝不冒充模型生成的像素；真图到位时自动让位。 */
+const SHOT_EN = {"中景":"MEDIUM","近景":"CLOSE","全景":"WIDE","过肩":"OTS","特写":"INSERT","空镜":"ESTABLISHING"};
+function svgURI(svg){ return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); }
+function figure(cx, cy, s, op){
+  return '<circle cx="'+cx+'" cy="'+cy+'" r="'+(7*s).toFixed(1)+'" fill="#000" opacity="'+op+'"/>'
+    + '<path d="M'+(cx-9*s)+' '+(cy+8*s)+' Q'+cx+' '+(cy+2*s)+' '+(cx+9*s)+' '+(cy+8*s)
+    + ' L'+(cx+12*s)+' '+(cy+36*s)+' L'+(cx-12*s)+' '+(cy+36*s)+' Z" fill="#000" opacity="'+op+'"/>';
+}
+function svgShell(n, title, foot, body){
+  return svgURI('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 135" width="240" height="135">'
+    + '<rect width="240" height="135" fill="#c4c3b6"/>'
+    + '<rect x="0" y="0" width="240" height="17" fill="#000"/>'
+    + '<text x="8" y="11.5" fill="#fff" font-family="Helvetica,Arial" font-size="8" letter-spacing="1.1">'+title+'</text>'
+    + '<text x="232" y="11.5" fill="#fff" text-anchor="end" font-family="Helvetica,Arial" font-size="7" letter-spacing="1">PREVIZ</text>'
+    + '<g>'+body+'</g>'
+    + '<path d="M6 25 v-7 h8 M234 25 v-7 h-8 M6 110 v7 h8 M234 110 v7 h-8" stroke="#000" stroke-width="1" fill="none" opacity=".6"/>'
+    + '<rect x="0" y="118" width="240" height="17" fill="#000"/>'
+    + '<text x="8" y="129.5" fill="#fff" font-family="Helvetica,Arial" font-size="7.5" letter-spacing=".8">'+foot+'</text>'
+    + '<text x="232" y="129.5" fill="#fff" text-anchor="end" font-family="Helvetica,Arial" font-size="7" letter-spacing=".8">ON DEVICE</text>'
+    + '</svg>');
+}
+function previzShot(it, i){
+  const kind = String(it.scene || "中景");
+  const cam = String(it.camera || "固定");
+  const n = String(i+1).padStart(2,"0");
+  const HZ = '<line x1="0" y1="88" x2="240" y2="88" stroke="#000" stroke-width="0.8" opacity=".35"/>';
+  let body;
+  if(kind.indexOf("全景") >= 0 || kind.indexOf("空镜") >= 0){
+    body = '<line x1="0" y1="78" x2="240" y2="78" stroke="#000" stroke-width="0.8" opacity=".4"/>'
+      + '<rect x="14" y="52" width="26" height="26" fill="#000" opacity=".28"/>'
+      + '<rect x="46" y="42" width="18" height="36" fill="#000" opacity=".2"/>'
+      + '<rect x="176" y="48" width="22" height="30" fill="#000" opacity=".24"/>'
+      + '<rect x="202" y="38" width="16" height="40" fill="#000" opacity=".18"/>'
+      + ['40','70','100','130','160','190','220'].map((x,j)=>'<circle cx="'+x+'" cy="'+(30+j%3*7)+'" r="1.6" fill="#000" opacity=".45"/>').join("")
+      + figure(120, 60, 0.55, ".75");
+  }else if(kind.indexOf("近景") >= 0){
+    body = HZ + figure(118, 36, 2.15, ".78") + '<path d="M70 117 Q120 92 170 117 Z" fill="#000" opacity=".3"/>';
+  }else if(kind.indexOf("过肩") >= 0){
+    body = HZ + figure(96, 46, 0.95, ".72")
+      + '<path d="M158 117 Q172 62 206 60 L240 66 L240 117 Z" fill="#000" opacity=".8"/>'
+      + '<circle cx="196" cy="50" r="12" fill="#000" opacity=".8"/>';
+  }else if(kind.indexOf("特写") >= 0){
+    body = '<circle cx="120" cy="66" r="34" fill="none" stroke="#000" stroke-width="1.2"/>'
+      + '<circle cx="120" cy="66" r="24" fill="#000" opacity=".18"/>'
+      + '<rect x="92" y="60" width="56" height="12" rx="6" fill="#000" opacity=".55"/>'
+      + '<circle cx="120" cy="66" r="7" fill="none" stroke="#000" stroke-width="1"/>'
+      + '<path d="M60 34 L74 44 M180 98 L166 88" stroke="#000" stroke-width="0.8" opacity=".45" fill="none"/>';
+  }else{
+    body = HZ + figure(90, 46, 1.15, ".72") + figure(156, 48, 1.05, ".55")
+      + '<path d="M0 101 L240 101" stroke="#000" stroke-width="0.6" opacity=".2"/>';
+  }
+  if(cam.indexOf("推") >= 0){
+    body += '<path d="M214 30 L198 42 M198 42 L207 42 M198 42 L198 33" stroke="#000" stroke-width="1" fill="none"/>';
+  }
+  return svgShell(n, "SHOT " + n + " / " + (SHOT_EN[kind] || "MEDIUM"),
+    (it.dur || 5) + "S / " + cam + " / 9:16", body);
+}
+function previzEcom(it, i){
+  const n = String(i+1).padStart(2,"0");
+  const body = '<line x1="16" y1="96" x2="224" y2="96" stroke="#000" stroke-width="0.8" opacity=".35"/>'
+    + '<ellipse cx="120" cy="98" rx="42" ry="5" fill="#000" opacity=".14"/>'
+    + '<rect x="94" y="44" width="52" height="52" rx="3" fill="#000" opacity=".55"/>'
+    + '<path d="M104 44 L104 34 L136 34 L136 44" fill="none" stroke="#000" stroke-width="1.2"/>'
+    + '<rect x="103" y="60" width="34" height="16" fill="#c4c3b6" opacity=".85"/>'
+    + '<path d="M62 30 L62 96 M178 30 L178 96" stroke="#000" stroke-width="0.7" opacity=".25" fill="none"/>';
+  return svgShell(n, "SKU " + n + " / STILL LIFE", (it.size || "1:1") + " / ANCHOR LOCK", body);
+}
+function previzFor(scene, it, i){ return scene === "drama" ? previzShot(it, i) : previzEcom(it, i); }
+function frameLabel(scene, it, i){
+  return scene === "drama" ? ("Shot " + String(i+1).padStart(2,"0")) : (it.sku || "SKU-" + String(i+1).padStart(2,"0"));
+}
+function renderShotList(scene, r){
+  const box = $("#shotListWrap");
+  if(!box) return;
+  if(scene !== "drama" || !r.items.length){ box.style.display = "none"; return; }
+  box.style.display = "";
+  $("#shotListBody").innerHTML = r.items.map((it,i) =>
+    "<tr><td>" + String(i+1).padStart(2,"0") + "</td>"
+    + "<td><b>" + esc(it.scene || "中景") + "</b><br><span class='micro'>" + esc(SHOT_EN[it.scene] || "MEDIUM") + "</span></td>"
+    + "<td>" + esc(it.action || "—") + "</td>"
+    + "<td>" + esc(String(it.dur || 5)) + "s</td>"
+    + "<td>" + esc(it.camera || "固定") + "</td>"
+    + "<td>" + (it.re_anchor === false ? "关闭" : "re-anchor") + "</td>"
+    + "<td class='prompt'>" + esc(it.prompt || "—") + "</td>"
+    + "<td>" + esc(it.stage === "keyframe" ? "关键帧" : (it.stage || "图先行")) + "</td></tr>"
+  ).join("");
+}
+
 function renderResult(scene, mode, raw){
   const r = normalize(raw, scene);
   const sc = SCENES[scene];
@@ -619,41 +728,55 @@ function renderResult(scene, mode, raw){
     ['Status', esc(r.status)], ['Mode', esc(modeName)], [sc.unit, r.items.length],
     ['Latency', r.elapsed != null ? Number(r.elapsed).toFixed(2) + "s" : "—"],
     ['Tokens', r.tokens != null ? r.tokens : "—"], ['Nodes', r.steps],
-    ['Plates', r.images.length]
+    ['Renders', r.images.length], ['Previz', Math.max(0, r.items.length - r.images.length)]
   ].map(p => '<span class="chip"><span>' + p[0] + '</span><b>' + p[1] + '</b></span>').join("");
   $("#canvasMeta").innerHTML = (r.plan.plan_id ? esc(r.plan.plan_id) : "已返回结果") + '<br><span class="micro">Plan / Output</span>';
 
+  /* 按当前运行通道给出准确原因，避免「启动了后端却仍不出图」的误解 */
+  const NO_PIXEL_HINT = {
+    demo:"演示模式只在浏览器里跑完 5 节点编排（镜头拆解 / prompt / 队列收据），零外部请求。真出图：先把模式切到「本地编排服务」，再启动带 <code>--engine cloud</code>（DEV ONLY）或 <code>--engine local</code> 的后端。",
+    local:"本地服务当前是 <code>--engine mock</code>（端侧降级）：不加载权重、不出像素。重启后端时加 <code>--engine cloud</code>（DEV ONLY）或 <code>--engine local</code>（需本机 ComfyUI + 权重），再重跑。",
+    dify:"Dify 云端工作流跑的是「开始 → LLM 拆解 → 代码校验 → HTTP 回显 → 结束」，DSL 里没有出图节点，只回结构化分镜。真出图请走「本地编排服务」通道。"
+  };
+  let noPixel = NO_PIXEL_HINT[mode] || NO_PIXEL_HINT.demo;
+  const errRaw = r.gen && (r.gen.images_error || r.gen.imagesError);
+  const errs = jparse(errRaw, []);
+  if(Array.isArray(errs) && errs.length){ noPixel += "<br>本次出图失败原因：" + esc(String(errs[0])); }
+
   if(!r.items.length){
     $("#canvas").innerHTML = '<div class="empty"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg><span class="micro">No Plates Yet</span>工作流返回成功，但没有可展示的任务卡片，可展开下方 Raw Telemetry 查看回包。</div>';
+    $("#keyframes").innerHTML = '<span class="muted tiny">' + noPixel + "</span>";
+    $("#shotListWrap").style.display = "none";
   }else{
     $("#canvas").innerHTML = r.items.map((it,i) => {
-      const img = r.images[i];
-      const thumb = img ? '<img src="' + esc(img.url || img.fileUrl || img.src) + '" alt="出图结果" loading="lazy" onerror="this.style.display=\'none\'">' : "";
-      const label = scene === "ecom" ? (it.sku || "SKU-" + (i+1)) : ("Shot " + String(i+1).padStart(2,"0"));
+      const im = r.images[i], real = !!im;
+      const src = real ? esc(im.url || im.fileUrl || im.src) : previzFor(scene, it, i);
+      const label = frameLabel(scene, it, i);
       const title = scene === "ecom" ? (it.name || it.sku || label) : (it.scene || "镜头") + " · " + (it.dur || 5) + "s";
       const desc = scene === "ecom" ? (it.style + " / " + it.size + " / 候选 " + (it.candidates || it.count || "—")) : (it.action || it.prompt || "");
       const tags = scene === "ecom"
         ? [it.engine || "Z-Image-Turbo Q5", "锚图锁定", "seed " + (it.seed || "—")]
         : [it.camera || "固定", "≤5s 边界", it.stage === "keyframe" ? "图先行" : (it.stage || "关键帧")];
       return '<div class="item"><div class="thumb" style="background:' + TONES[i % TONES.length] + '">' +
-        '<span class="badge">' + esc(label) + '</span>' + (thumb || esc(label)) + '</div>' +
+        '<span class="badge">' + esc(label) + ' · ' + (real ? "RENDERED" : "PREVIZ") + '</span>' +
+        '<img src="' + src + '" alt="' + (real ? "出图结果" : "分镜预演草图") + '" loading="lazy" onerror="this.style.display=\'none\'"></div>' +
         '<div class="body"><b title="' + esc(title) + '">' + esc(title) + '</b><p>' + esc(desc) + '</p>' +
         '<div class="meta">' + tags.map(t => '<span>' + esc(t) + '</span>').join("") + '</div></div></div>';
     }).join("");
+
+    /* 关键帧：真图显示 RENDERED，其余镜头用 PREVIZ 草图补齐，故事板不留白 */
+    const frames = r.items.map((it,i) => {
+      const im = r.images[i], real = !!im;
+      const src = real ? esc(im.url || im.fileUrl || im.src) : previzFor(scene, it, i);
+      return '<div class="kf"><img src="' + src + '" alt="' + (real ? "关键帧" : "分镜预演") + ' ' + (i+1) + '"><span>'
+        + esc(frameLabel(scene, it, i)) + (real ? " · RENDERED" : " · PREVIZ") + '</span></div>';
+    }).join("");
+    const note = r.images.length
+      ? '<div class="previz-note"><b>已产出像素 / RENDERED</b> · 由本地编排服务的图像引擎生成（DEV ONLY 演示增强）；未出图的镜头仍以 PREVIZ 构图草图补齐，两者严格区分标注。</div>'
+      : '<div class="previz-note"><b>分镜预演 / STORYBOARD PREVIZ</b> · 浏览器内离线生成的构图草图，用于校验景别、机位与 ≤5s 边界，<b>不是模型生成的像素</b>。<br>' + noPixel + '</div>';
+    $("#keyframes").innerHTML = note + frames;
+    renderShotList(scene, r);
   }
-  /* 空关键帧区：按当前运行通道给出准确原因，避免「启动了后端却仍不出图」的误解 */
-  const NO_PIXEL_HINT = {
-    demo:"演示模式只在浏览器里跑完 5 节点编排（镜头拆解 / prompt / 队列收据），零外部请求、不产出像素。要看到真图：先把左侧模式切到「本地编排服务」，再启动带 <code>--engine cloud</code>（DEV ONLY）或 <code>--engine local</code> 的后端。",
-    local:"编排已通过，但本地服务当前是 <code>--engine mock</code>（端侧降级）：按设计不加载权重、不出像素。重启后端时加 <code>--engine cloud</code>（DEV ONLY，零 key 联网）或 <code>--engine local</code>（需本机 ComfyUI + 权重），再重跑。",
-    dify:"Dify 云端工作流跑的是「开始 → LLM 拆解 → 代码校验 → HTTP 回显 → 结束」，DSL 里没有出图节点，因此只回结构化分镜、不产出像素。真出图请走「本地编排服务」通道。"
-  };
-  let noPixel = NO_PIXEL_HINT[mode] || NO_PIXEL_HINT.demo;
-  const errRaw = r.gen && (r.gen.images_error || r.gen.imagesError);
-  const errs = jparse(errRaw, []);
-  if(Array.isArray(errs) && errs.length){ noPixel += "<br>本次出图失败原因：" + esc(String(errs[0])); }
-  $("#keyframes").innerHTML = r.images.length
-    ? r.images.map((im,i) => '<div class="kf"><img src="' + esc(im.url || im.fileUrl || im.src) + '" alt="关键帧 ' + (i+1) + '"><span>' + esc(im.file || ("Plate " + (i+1))) + '</span></div>').join("")
-    : '<span class="muted tiny">' + noPixel + "</span>";
   $("#rawJson").textContent = JSON.stringify(raw, null, 2);
   state.last[scene] = {raw:raw, mode:mode, at:Date.now()};
   save();
@@ -767,6 +890,7 @@ function bind(){
     else{
       $("#canvas").innerHTML = '<div class="empty"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg><span class="micro">Awaiting Input</span>填好左侧参数，点 RUN WORKFLOW 开始</div>';
       $("#keyframes").innerHTML = ""; $("#stats").innerHTML = ""; $("#rawJson").textContent = "尚未运行工作流。";
+      $("#shotListWrap").style.display = "none";
       $("#canvasMeta").innerHTML = '尚未运行<br><span class="micro">Awaiting Input</span>';
     }
     clearAlert();
