@@ -176,18 +176,20 @@ workflow:
       type: custom
       width: 244
     - data:
-        code: "import json\nimport re\n\ndef main(llm_text, shot_count, resolution, anchor_lock):\n    raw = (llm_text or \"\").strip()\n    raw = re.sub(r\"^```(?:json)?\", \"\", raw).strip()\n    raw\
-          \ = re.sub(r\"```$\", \"\", raw).strip()\n    try:\n        plan = json.loads(raw)\n    except Exception:\n        # 本地规则兜底，绝不调用云端模型重试\n        n = int(shot_count or 6)\n        plan = {\n   \
-          \         \"plan_id\": \"drama-fallback\",\n            \"engine\": \"Z-Image-Turbo Q5_K_S\",\n            \"boundary\": \"竖屏 9:16 / 单镜头 ≤5s / 图先行\",\n            \"characters\": [\"林夏\", \"陈屿\"\
-          ],\n            \"shots\": [\n                {\"scene\": \"中景\", \"action\": \"两人对视，情绪克制\", \"dur\": 4,\n                 \"prompt\": \"cinematic still, two characters, anchored reference\",\n\
-          \                 \"camera\": \"固定\", \"identity_ref\": \"原始角色锚图\"}\n                for _ in range(n)\n            ],\n        }\n    n = int(shot_count or len(plan.get(\"shots\", [])) or 6)\n\
-          \    shots = plan.get(\"shots\", [])[:n]\n    for s in shots:\n        # 端侧边界在代码里强制落地，不信任模型自觉\n        s[\"dur\"] = min(int(s.get(\"dur\", 4) or 4), 5)\n        s[\"identity_ref\"] = \"原始角色锚图\"\
-          \n        s.setdefault(\"scene\", \"中景\")\n        s.setdefault(\"action\", \"情绪延续\")\n        s.setdefault(\"prompt\", \"cinematic still, anchored reference\")\n        s.setdefault(\"camera\"\
-          , \"固定\")\n        s[\"stage\"] = \"keyframe\"   # 图先行：本轮只排队关键帧，不启动视频\n    plan[\"shots\"] = shots\n    plan[\"boundary\"] = \"竖屏 9:16 / 单镜头 ≤5s / 图先行 / I2V 5 帧段（无云端兜底）\"\n    drift = \"关闭\" in\
-          \ (anchor_lock or \"\")\n    request = {\n        \"plan_id\": plan.get(\"plan_id\", \"drama-local\"),\n        \"scene\": \"drama\",\n        \"engine\": \"Z-Image-Turbo Q5_K_S\",\n        \"\
-          resolution\": resolution,\n        \"anchor_lock\": not drift,\n        \"local_only\": True,\n        \"stage\": \"keyframe\",\n        \"tasks\": shots,\n    }\n    return {\n        \"plan_json\"\
-          : json.dumps(plan, ensure_ascii=False),\n        \"request_json\": json.dumps(request, ensure_ascii=False),\n        \"shot_count\": len(shots),\n        \"summary\": \"本地编排完成：%d 个镜头，均 ≤5s，图先行排队关键帧，re-anchor=%s\"\
-          \n                   % (len(shots), \"关\" if drift else \"开\"),\n    }"
+        code: "import json\nimport re\n\ndef extract_plan(text):\n    \"\"\"容错解析 LLM 的结构化输出：兼容 Markdown 围栏、前后解释文字、尾随逗号。\"\"\"\n    s = (text or \"\").strip()\n    s = re.sub(r\"^```(?:json)?\\s*\", \"\"\
+          , s)\n    s = re.sub(r\"\\s*```$\", \"\", s).strip()\n    try:\n        return json.loads(s)\n    except Exception:\n        pass\n    i, j = s.find(\"{\"), s.rfind(\"}\")\n    if i >= 0 and j\
+          \ > i:\n        for cand in (s[i:j+1], re.sub(r\",\\s*([}\\]])\", r\"\\1\", s[i:j+1])):\n            try:\n                return json.loads(cand)\n            except Exception:\n            \
+          \    pass\n    return None\n\n\ndef main(llm_text, shot_count, resolution, anchor_lock):\n    plan = extract_plan(llm_text)\n    if plan is None:\n        # 本地规则兜底，绝不调用云端模型重试\n        n = int(shot_count\
+          \ or 6)\n        plan = {\n            \"plan_id\": \"drama-fallback\",\n            \"engine\": \"Z-Image-Turbo Q5_K_S\",\n            \"boundary\": \"竖屏 9:16 / 单镜头 ≤5s / 图先行\",\n           \
+          \ \"characters\": [\"林夏\", \"陈屿\"],\n            \"shots\": [\n                {\"scene\": \"中景\", \"action\": \"两人对视，情绪克制\", \"dur\": 4,\n                 \"prompt\": \"cinematic still, two characters,\
+          \ anchored reference\",\n                 \"camera\": \"固定\", \"identity_ref\": \"原始角色锚图\"}\n                for _ in range(n)\n            ],\n        }\n    n = int(shot_count or len(plan.get(\"\
+          shots\", [])) or 6)\n    shots = plan.get(\"shots\", [])[:n]\n    for s in shots:\n        # 端侧边界在代码里强制落地，不信任模型自觉\n        s[\"dur\"] = min(int(s.get(\"dur\", 4) or 4), 5)\n        s[\"identity_ref\"\
+          ] = \"原始角色锚图\"\n        s.setdefault(\"scene\", \"中景\")\n        s.setdefault(\"action\", \"情绪延续\")\n        s.setdefault(\"prompt\", \"cinematic still, anchored reference\")\n        s.setdefault(\"\
+          camera\", \"固定\")\n        s[\"stage\"] = \"keyframe\"   # 图先行：本轮只排队关键帧，不启动视频\n    plan[\"shots\"] = shots\n    plan[\"boundary\"] = \"竖屏 9:16 / 单镜头 ≤5s / 图先行 / I2V 5 帧段（无云端兜底）\"\n    drift =\
+          \ \"关闭\" in (anchor_lock or \"\")\n    request = {\n        \"plan_id\": plan.get(\"plan_id\", \"drama-local\"),\n        \"scene\": \"drama\",\n        \"engine\": \"Z-Image-Turbo Q5_K_S\",\n\
+          \        \"resolution\": resolution,\n        \"anchor_lock\": not drift,\n        \"local_only\": True,\n        \"stage\": \"keyframe\",\n        \"tasks\": shots,\n    }\n    return {\n   \
+          \     \"plan_json\": json.dumps(plan, ensure_ascii=False),\n        \"request_json\": json.dumps(request, ensure_ascii=False),\n        \"shot_count\": len(shots),\n        \"summary\": \"本地编排完成：%d\
+          \ 个镜头，均 ≤5s，图先行排队关键帧，re-anchor=%s\"\n                   % (len(shots), \"关\" if drift else \"开\"),\n    }"
         code_language: python3
         desc: 结构化输出的护栏 + 端侧边界的强制执行点。模型可能被剧本带偏写出长镜头， 所以时长裁剪、身份锚定、图先行策略都在这里硬性落地。
         outputs:
