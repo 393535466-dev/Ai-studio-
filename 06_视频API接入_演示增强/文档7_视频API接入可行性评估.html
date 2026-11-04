@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文档7 · 视频生成 API 接入可行性评估（演示增强）</title>
+<style>
+  :root{
+    --ink:#1f2937; --sub:#5b6472; --line:#e3e8ef; --bg:#f6f8fb;
+    --blue:#1d4ed8; --blue-bg:#eef3ff; --amber:#b45309; --amber-bg:#fff7e8;
+    --green:#047857; --green-bg:#eaf7f1; --red:#b91c1c; --red-bg:#fef2f2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:34px 26px 70px}
+  header{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px 30px;margin-bottom:22px}
+  .kicker{font-size:12px;letter-spacing:2px;color:var(--blue);font-weight:700}
+  h1{font-size:27px;margin:8px 0 10px;letter-spacing:-.4px}
+  .lead{color:var(--sub);margin:0;font-size:15px}
+  .tag{display:inline-block;background:var(--amber-bg);color:var(--amber);
+    border:1px solid #f2d9ac;border-radius:999px;padding:2px 11px;font-size:12px;font-weight:700;margin-left:8px}
+  section{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 30px;margin-bottom:20px}
+  h2{font-size:19px;margin:0 0 16px;display:flex;align-items:center;gap:11px}
+  h2 .n{display:inline-flex;width:29px;height:29px;align-items:center;justify-content:center;
+    background:var(--blue-bg);color:var(--blue);border-radius:9px;font-size:13px;font-weight:800}
+  h3{font-size:15px;margin:20px 0 8px;color:var(--ink)}
+  p{margin:8px 0}
+  .muted{color:var(--sub);font-size:13px}
+  code{background:#f1f4f9;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+    font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#334}
+  pre{background:#101827;color:#e8eef8;border-radius:11px;padding:15px 18px;overflow-x:auto;
+    font:12.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;margin:12px 0}
+  pre code{background:none;border:0;color:inherit;padding:0}
+  .note{border-radius:11px;padding:14px 17px;margin:14px 0;font-size:14px;line-height:1.7}
+  .note .nt{font-weight:800;display:block;margin-bottom:3px;font-size:13px;letter-spacing:.4px}
+  .warn{background:var(--amber-bg);border:1px solid #f0d8ac;color:#7c4a0a}
+  .danger{background:var(--red-bg);border:1px solid #f6c9c9;color:#8f1d1d}
+  .ok{background:var(--green-bg);border:1px solid #bfe6d3;color:#065f46}
+  .info{background:var(--blue-bg);border:1px solid #cfddff;color:#1e3a8a}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f7f9fc;font-weight:700;color:#374151}
+  tr:nth-child(even) td{background:#fbfcfe}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:14px 0}
+  .card{border:1px solid var(--line);border-radius:11px;padding:14px 16px;background:#fff}
+  .ct{font-weight:700;font-size:14px;margin-bottom:6px}
+  .cb{font-size:13px;color:var(--sub);line-height:1.65}
+  ul{padding-left:20px;margin:8px 0}li{margin:5px 0}
+  .pill{display:inline-block;padding:1px 8px;border-radius:6px;font-size:11.5px;font-weight:700}
+  .p-ok{background:var(--green-bg);color:var(--green)}
+  .p-no{background:var(--red-bg);color:var(--red)}
+  .p-mid{background:var(--amber-bg);color:var(--amber)}
+  .svgbox{background:#fbfcfe;border:1px solid var(--line);border-radius:12px;padding:10px;margin:14px 0}
+  footer{text-align:center;color:var(--sub);font-size:12.5px;padding:16px 0 0}
+  .back{display:inline-block;color:var(--blue);text-decoration:none;font-size:13px;font-weight:600;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">文档 7 · 演示增强通道（不进作业正文）</div>
+  <h1>接入生成视频网站的 API —— 可行性评估<span class="tag">红线隔离</span></h1>
+  <p class="lead">一句话结论：<strong>技术上完全能接</strong>，而且这些 API 的异步形态和本作业里已经画好的「队列状态机 / 显式降级」几乎一模一样；<strong>但它会破掉题干「全部推理在本地、无云端兜底」这条核心约束</strong>，所以只能作为独立标注的演示增强，不能混进交付主体。</p>
+  <a class="back" href="../index.html">&larr; 返回交付总览</a>
+</header>
+
+<section>
+  <h2><span class="n">01</span>三条必须先讲清的红线</h2>
+  <div class="note danger"><span class="nt">红线一 · 约束冲突（最重要）</span>
+    作业题干要求端侧推理、<strong>无云端兜底</strong>。视频生成 API 的全部算力都在厂商机房，属于典型的云端兜底。若把它写进正式方案，等于自己推翻了 Part1 的模型选型与评估结论。<strong>正确做法：单独开一个「演示增强」目录，明确标注不进正文</strong>，答辩时作为「如果放开约束，架构怎么扩展」的加分回答。</div>
+  <div class="note warn"><span class="nt">红线二 · 接口形态完全不同（异步，不是同步）</span>
+    生产级视频 API 几乎全是 <strong>提交任务 → 拿 task_id → 轮询</strong> 的两段式，单片段通常 <strong>1~5 分钟</strong>。而 Dify 云端工作流整体超时默认约 200 秒、HTTP 节点建议 30 秒，直接把视频 API 塞进现有那个 HTTP 节点会<strong>必然超时</strong>。必须加一层「异步转同步」的适配器，或者改成提交后交给队列状态机。</div>
+  <div class="note warn"><span class="nt">红线三 · 需要资质与钱</span>
+    国内主流平台基本都要实名认证、充值，按秒计费约 <strong>0.25~0.9 元/秒</strong>；免费额度多半是网页端积分，<strong>不等于 API 免费额度</strong>。作业演示建议只用免费 API 或明确的降级模式，避免现场翻车。</div>
+  <div class="note ok"><span class="nt">好消息</span>
+    这些约束带来的「异步任务 / 状态机 / 失败重试 / 超时后保留 task_id / 显式降级」，恰好就是文档3《多任务并发与不丢稿》里已经设计好的东西。<strong>接视频 API 不需要改架构，只需要换一个驱动</strong> —— 这点在答辩里非常值钱。</div>
+</section>
+
+<section>
+  <h2><span class="n">02</span>标准接入形态：三段式异步链路</h2>
+  <p class="muted">下图是各家视频 API 的通用形态（硅基流动 /video/submit + /video/status、阿里百炼 X-DashScope-Async、可灵、即梦、MiniMax 都是这个套路）。</p>
+  <div class="svgbox">
+  <svg viewBox="0 0 900 300" width="100%" role="img" aria-label="视频生成 API 三段式异步链路">
+    <rect x="0" y="0" width="900" height="300" fill="#fbfcfe"/>
+    <text x="26" y="28" font-size="13" font-weight="700" fill="#1f2937">一次视频任务的时间线（典型 60~180 秒）</text>
+
+    <rect x="26" y="52" width="150" height="66" rx="10" fill="#eef3ff" stroke="#cfddff"/>
+    <text x="101" y="78" text-anchor="middle" font-size="13" font-weight="700" fill="#1d4ed8">① 提交任务</text>
+    <text x="101" y="98" text-anchor="middle" font-size="11" fill="#475569">POST /video/submit</text>
+    <text x="101" y="112" text-anchor="middle" font-size="11" fill="#475569">秒级返回</text>
+
+    <rect x="206" y="52" width="150" height="66" rx="10" fill="#eaf7f1" stroke="#bfe6d3"/>
+    <text x="281" y="78" text-anchor="middle" font-size="13" font-weight="700" fill="#047857">拿 task_id</text>
+    <text x="281" y="98" text-anchor="middle" font-size="11" fill="#475569">requestId / task_id</text>
+    <text x="281" y="112" text-anchor="middle" font-size="11" fill="#475569">立即入库持久化</text>
+
+    <rect x="386" y="52" width="230" height="66" rx="10" fill="#fff7e8" stroke="#f0d8ac"/>
+    <text x="501" y="78" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">② 间隔递增轮询</text>
+    <text x="501" y="98" text-anchor="middle" font-size="11" fill="#475569">5s → 8s → 12s → 20s（上限 15 分钟）</text>
+    <text x="501" y="112" text-anchor="middle" font-size="11" fill="#475569">InQueue / InProgress / Succeed / Failed</text>
+
+    <rect x="646" y="52" width="150" height="66" rx="10" fill="#eaf7f1" stroke="#bfe6d3"/>
+    <text x="721" y="78" text-anchor="middle" font-size="13" font-weight="700" fill="#047857">③ 拿 video_url</text>
+    <text x="721" y="98" text-anchor="middle" font-size="11" fill="#475569">下载 / 送审片台</text>
+    <text x="721" y="112" text-anchor="middle" font-size="11" fill="#475569">不回传 base64</text>
+
+    <path d="M176 85 L206 85" stroke="#94a3b8" stroke-width="2" marker-end="url(#ar)"/>
+    <path d="M356 85 L386 85" stroke="#94a3b8" stroke-width="2" marker-end="url(#ar)"/>
+    <path d="M616 85 L646 85" stroke="#94a3b8" stroke-width="2" marker-end="url(#ar)"/>
+    <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#94a3b8"/></marker></defs>
+
+    <line x1="26" y1="140" x2="796" y2="140" stroke="#e3e8ef"/>
+    <text x="26" y="162" font-size="12" font-weight="700" fill="#1f2937">对照：现有链路 vs 需要补的一层</text>
+
+    <rect x="26" y="176" width="360" height="46" rx="9" fill="#fef2f2" stroke="#f6c9c9"/>
+    <text x="42" y="196" font-size="12" font-weight="700" fill="#b91c1c">❌ 直接把视频 API 塞进 Dify 的 HTTP 节点</text>
+    <text x="42" y="213" font-size="11" fill="#7f1d1d">同步等 1~5 分钟 → 撞上 200s 工作流超时 / 30s 读取超时</text>
+
+    <rect x="406" y="176" width="390" height="46" rx="9" fill="#eaf7f1" stroke="#bfe6d3"/>
+    <text x="422" y="196" font-size="12" font-weight="700" fill="#047857">✅ 加一层 video_api_adapter.py（异步转同步 / 提交即返回）</text>
+    <text x="422" y="213" font-size="11" fill="#065f46">适配器内部 submit+poll，对上只暴露一个普通 HTTP 接口</text>
+
+    <rect x="26" y="238" width="770" height="44" rx="9" fill="#eef3ff" stroke="#cfddff"/>
+    <text x="42" y="257" font-size="12" font-weight="700" fill="#1e3a8a">作业已有能力可直接复用</text>
+    <text x="42" y="274" font-size="11" fill="#334155">队列状态机 · 失败恢复与不丢稿 · 审片台 · 显式降级 · API_BASE 环境变量（文档3 / Demo / 文档4 已实现）</text>
+  </svg>
+  </div>
+  <div class="note info"><span class="nt">一个容易踩的坑</span>
+    本地轮询超时 <strong>不等于任务失败</strong>。必须把 <code>requestId</code> 持久化下来让别的 worker 续查；<strong>绝对不要重新提交一次</strong>，否则会生成两段视频、重复扣费。这正是文档3「不丢稿」要解决的问题。</div>
+</section>
+
+<section>
+  <h2><span class="n">03</span>平台对照（2026-11 公开资料，以官网实时为准）</h2>
+  <table>
+    <tr><th>平台 / 模型</th><th>接口形态</th><th>价格参考</th><th>免费 API 额度</th><th>适合我们吗</th></tr>
+    <tr><td><strong>硅基流动 SiliconFlow</strong><br><span class="muted">Wan2.x 系列</span></td><td>异步 <code>/video/submit</code> + <code>/video/status</code>，返回 requestId</td><td>按量，开源模型通常较低</td><td>部分 9B 以下模型免费，<strong>视频模型一般不在免费范围</strong></td><td><span class="pill p-ok">首选</span> 与项目里 Wan2.2 口径最贴合，官方文档给出完整异步示例</td></tr>
+    <tr><td><strong>智谱 CogVideoX-Flash</strong></td><td>异步任务；兼容 OpenAI 风格调用</td><td>公开资料标注为免费模型</td><td><span class="pill p-ok">有免费视频 API</span></td><td><span class="pill p-ok">零成本首选</span> 但需以开放平台实时口径为准，画质/时长有限</td></tr>
+    <tr><td><strong>阿里百炼 · 通义万相</strong></td><td>异步，必须带 <code>X-DashScope-Async: enable</code>，task_id 有效 24h</td><td>约 0.25~0.5 元/秒</td><td>新人各模型独立赠送额度（有效期限制）</td><td><span class="pill p-mid">备选</span> 文档最规范，但需 WorkspaceId，配置稍繁</td></tr>
+    <tr><td><strong>可灵 / 即梦 / MiniMax / Vidu</strong></td><td>异步 task_id + 轮询</td><td>约 0.3~0.9 元/秒；10 秒片段约 3~9 元</td><td>网页端每日积分 ≠ API 免费额度</td><td><span class="pill p-mid">不建议</span> 画质好但需充值实名，作业演示不划算</td></tr>
+    <tr><td><strong>本地 Wan2.2 / LTX（作业正文方案）</strong></td><td>同步本地推理</td><td>0 元，但需 ~24GB 显存</td><td>—</td><td><span class="pill p-no">你的 16GB 机器跑不动</span> 已在文档5 显式降级为分镜故事板 + 关键帧</td></tr>
+  </table>
+  <p class="muted">※ 上表价格/额度来自公开横评与厂商文档，采集口径可能随时间调整；真正接入前请以控制台定价页为准。作业演示<strong>不依赖任何一家平台的真实计费</strong>。</p>
+</section>
+
+<section>
+  <h2><span class="n">04</span>三条可选路线（按推荐度排序）</h2>
+  <div class="grid">
+    <div class="card"><div class="ct">A · 保持现状（推荐交作业）</div><div class="cb">分镜 JSON + 关键帧 + 交互 Demo，视频任务转待办。<strong>端侧约束 100% 成立</strong>，答辩口径已在文档5 写好。代价：现场看不到「动起来」。</div></div>
+    <div class="card"><div class="ct">B · 关键帧拼预演 MP4</div><div class="cb">把已生成的关键帧按顺序加转场拼成镜头预览，明确标注「分镜预演稿，非模型生成」。<strong>零成本、零约束冲突</strong>，几分钟就能做，现场效果最好。</div></div>
+    <div class="card"><div class="ct">C · 真接视频 API（演示增强）</div><div class="cb">用本目录的适配器接免费/低价视频 API，产出真 MP4。<strong>必须单独标注不进正文</strong>，且要准备回答「这算不算云端兜底」。</div></div>
+  </div>
+  <div class="note warn"><span class="nt">如果选 C，请务必这样讲</span>
+    「正式方案仍是纯端侧。这一段是<strong>对照实验</strong>：用来验证当算力约束放开后，我设计的队列状态机和降级策略能否原样复用，结论是可以——只换了驱动，没改架构。」把主动权拿回来，而不是被问出「你违反了自己的约束」。</div>
+</section>
+
+<section>
+  <h2><span class="n">05</span>选 C 的话，具体改这三处</h2>
+  <h3>① 适配器已经写好：<code>video_api_adapter.py</code></h3>
+  <p>零依赖（只用 Python 标准库），把「提交 + 轮询 + 取 URL」封装成一个普通 HTTP 接口。默认<strong>不配 key 就显式降级</strong>并返回原因，绝不假装成功 —— 这条跟作业里的降级设计完全一致。</p>
+  <pre><code># 零成本看形态，不发任何外部请求
+python3 video_api_adapter.py --mock --prompt "柯基叼着棉花糖飘过天台"
+
+# 真跑（模型名以平台控制台实际可用名为准）
+export VIDEO_API_KEY=你的密钥
+python3 video_api_adapter.py --provider siliconflow \
+  --model "Wan-AI/Wan2.2-T2V-A14B" --prompt "柯基叼着棉花糖飘过天台"
+
+# 起服务，让 Dify / 本地编排服务调用
+python3 video_api_adapter.py --serve 8766
+# POST http://127.0.0.1:8766/api/video/generate  {"prompt":"...","wait":true}</code></pre>
+
+  <h3>② 接进现有编排（改动很小）</h3>
+  <table>
+    <tr><th>位置</th><th>改法</th></tr>
+    <tr><td><code>03_Dify工作流与API接入/engine_drivers.py</code></td><td>在 <code>DRIVERS</code> 里加一个 video 驱动，指向适配器的 <code>/api/video/generate</code>；现有 mock / comfyui / cloud_http 三驱动不动</td></tr>
+    <tr><td><code>03_Dify工作流与API接入/local_api_server.py</code></td><td>短剧场景的镜头状态从「视频渲染资格队列」推进到「已提交 / 轮询中 / 已完成」三态，落 <code>runtime_state.json</code>（不丢稿机制已现成）</td></tr>
+    <tr><td><code>05_Dify云端版/</code> 的 <code>API_BASE</code></td><td>云端 Dify 够不到 <code>127.0.0.1</code>，需要 ngrok / cloudflared 公网穿透后把 <code>API_BASE</code> 换成公网地址；或用 <code>--no-wait</code> 只提交任务、结果交给本地队列</td></tr>
+  </table>
+
+  <h3>③ 换平台只需改一张表</h3>
+  <p>适配器顶部的 <code>PROVIDERS</code> 字典登记了端点、鉴权方式、任务 ID 与状态字段名。可灵 / 即梦 / 阿里百炼加一条配置即可，主流程不用重写。这也是文档1 里「模型可替换性」评估维度的一个现成证据。</p>
+</section>
+
+<section>
+  <h2><span class="n">06</span>成本与风险速算</h2>
+  <table>
+    <tr><th>项目</th><th>估算</th><th>说明</th></tr>
+    <tr><td>4 镜头 × 5 秒，720P</td><td>约 5~18 元</td><td>按 0.25~0.9 元/秒；一次跑通全片够用，反复调试会累加</td></tr>
+    <tr><td>单镜头耗时</td><td>1~5 分钟</td><td>4 镜头串行即 4~20 分钟，答辩现场<strong>不适合实时等</strong>，务必提前生成好素材</td></tr>
+    <tr><td>网络要求</td><td>需公网可达</td><td>本地服务要穿透；视频 URL 通常有时效，拿到后要立即落盘</td></tr>
+    <tr><td>失败重试</td><td>只对 429/503/504 重试</td><td>400/401/403 立即停，避免重复扣费；适配器已按此实现</td></tr>
+    <tr><td>合规</td><td>实名 + 内容审核</td><td>各平台对生成内容有审核与水印策略，商用授权另计</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="n">07</span>答辩问答（背这两句就够）</h2>
+  <div class="note info"><span class="nt">Q：为什么没接视频 API？端侧不是也能调外部服务吗？</span>
+    「不能。题干明确<strong>无云端兜底</strong>，视频 API 的算力全在厂商机房，接了就等于推翻 Part1 的选型结论。我的处理是把它<strong>显式降级</strong>为分镜故事板 + 关键帧，视频任务转待办，交付不中断、不静默失败。」</div>
+  <div class="note info"><span class="nt">Q：如果给你 24GB 显存 / 放开约束，架构要不要重写？</span>
+    「不用重写。视频生成天然是<strong>异步任务</strong>，而我文档3 的队列状态机、失败恢复、不丢稿已经按异步任务设计好了。接 API 只需在驱动层加一个 submit / poll 适配器，编排层、审片台、降级策略全部原样复用 —— 这也是我把推理层做成可替换驱动的原因。」</div>
+</section>
+
+<section>
+  <h2><span class="n">08</span>本目录交付清单</h2>
+  <div class="grid">
+    <div class="card"><div class="ct">文档7_视频API接入可行性评估.html</div><div class="cb">本页：结论、三条红线、三段式链路图、平台对照、路线选择、改动点、成本、答辩口径</div></div>
+    <div class="card"><div class="ct">video_api_adapter.py</div><div class="cb">零依赖异步适配器：submit → 递增轮询 → 取 URL；支持 --mock 显式降级、--serve HTTP 服务、--no-wait 提交即返回</div></div>
+  </div>
+  <div class="note danger"><span class="nt">再强调一次归属</span>
+    本目录是<strong>演示增强 / 对照实验</strong>，<strong>不属于作业正文的 3 文档 + 1 Demo</strong>，也不改变文档5 里「16GB 机器显式降级、视频任务转待办」的正式结论。请勿把这两份文件写进提交清单。</div>
+</section>
+
+<footer>端侧 AI Studio · 作业交付 · 视频 API 演示增强通道 · 2026-11-04</footer>
+</div>
+</body>
+</html>
