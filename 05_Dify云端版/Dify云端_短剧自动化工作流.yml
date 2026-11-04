@@ -152,13 +152,13 @@ workflow:
         context:
           enabled: false
           variable_selector: []
-        desc: 云端演示版：默认已选 DeepSeek（对应你账号里的深度求索密钥）。如果你的账号接的是别的模型，打开本节点在模型下拉里换即可。提示词与本地版完全一致。
+        desc: 云端演示版：默认已选 DeepSeek 的 deepseek-flash（你账号已配深度求索密钥）。如果你的账号接的是别的模型，打开本节点在模型下拉里换即可。提示词与本地版完全一致。
         model:
           completion_params:
             max_tokens: 1400
             temperature: 0.2
           mode: chat
-          name: deepseek-chat
+          name: deepseek-flash
           provider: langgenius/deepseek/deepseek
         prompt_template:
         - id: sys-drama-0001
