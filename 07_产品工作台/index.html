@@ -302,7 +302,7 @@ footer{background:var(--chalk);border-top:1px solid var(--ink);padding:32px 40px
       <div class="eyebrow"><svg class="hex" viewBox="0 0 14 14"><path d="M7 1 L12.2 4 L12.2 10 L7 13 L1.8 10 L1.8 4 Z" fill="none" stroke="#595855" stroke-width="1"/></svg><span class="micro">03 / Credentials</span></div>
       <h3>连接设置 <span class="pill" style="vertical-align:3px;margin-left:6px">Local Only</span></h3>
       <div class="field">
-        <label>Dify App Key · <span id="keyScene">电商素材</span></label>
+        <label>Dify App Key · <span id="keyScene">电商素材</span> <span class="muted tiny">（两个场景各有自己的 Key，别混用）</span></label>
         <div class="keyrow"><input type="password" id="difyKey" placeholder="app- 开头，从「访问 API」复制" autocomplete="off"><button id="eyeDify">显示</button></div>
       </div>
       <div class="field">
@@ -313,7 +313,7 @@ footer{background:var(--chalk);border-top:1px solid var(--ink);padding:32px 40px
       <button class="cmdbtn" id="clearKeys">CLEAR KEYS / 清除已存密钥</button>
       <p class="tiny"><b>零密钥也能用</b>：演示模式、分镜预演与 Shot List 全程不需要任何 Key。这两个 Key 只是调用外部云端 API 的通行证（不是登录凭证），只在选「Dify 云端工作流」或重新生成视频时才需要；密钥只存本浏览器 localStorage。</p>
       <button class="cmdbtn" id="showCmd">BACKEND / 查看后台服务说明</button>
-      <div class="cmdbox" id="cmdBox">本地服务已装成 <b>macOS 开机自启的后台服务</b>，正常不用打开终端、也不用填密钥。只有迁移电脑或手动调试才需要手动执行：<br><code>python3 ../03_Dify工作流与API接入/local_api_server.py --engine mock --port 8765</code><br><code>python3 ../06_视频API接入_演示增强/video_api_adapter.py --serve 8766</code></div>
+      <div class="cmdbox" id="cmdBox">本地服务可装成 <b>macOS 开机自启的后台服务</b>，正常不用打开终端、也不用填密钥。<br><b>不想开机自启：</b>双击同目录 <b>卸载后台服务.command</b> 一次即可（只停用并归档配置，不删文件；想恢复再双击「安装后台服务.command」）。演示模式与分镜预演完全不依赖这些服务。<br>只有迁移电脑或手动调试才需要手动执行：<br><code>python3 ../03_Dify工作流与API接入/local_api_server.py --engine mock --port 8765</code><br><code>python3 ../06_视频API接入_演示增强/video_api_adapter.py --serve 8766</code></div>
       <div style="margin-top:16px">
         <div class="micro" style="margin-bottom:8px">Engine / 出图引擎 · 页面内切换，无需终端</div>
         <div class="engine-row" id="engineRow"></div>
@@ -542,6 +542,47 @@ function friendlyNetworkError(url, err){
     return "线上 HTTPS 页面无法直连本机 <code>http://127.0.0.1</code>（浏览器混合内容 / 私有网络限制）。请把 <b>07_产品工作台/index.html</b> 下载到本地双击打开，或使用「Dify 云端工作流」模式。";
   }
   return "连不上 <code>" + esc(url) + "</code>：服务未启动、端口不对，或请求被浏览器拦截。原始错误：" + esc(err && err.message || err);
+}
+
+/* ---------------- 把后端原始报错翻译成可操作指引 ---------------- */
+const SCENE_FIELDS = {
+  ecom:["product_name","style","size","sku_count","candidates","brief"],
+  drama:["script","shot_count","resolution","anchor_lock"]
+};
+function explainError(mode, scene, msg){
+  const raw = String(msg || ""), low = raw.toLowerCase();
+  /* Dify 开始表单必填校验：最常见的是「场景与 Key 用错了应用」 */
+  const miss = raw.match(/([A-Za-z_]+)\s+is required in input form/i);
+  if(miss){
+    const f = miss[1];
+    const owner = SCENE_FIELDS.drama.indexOf(f) >= 0 ? "drama" : (SCENE_FIELDS.ecom.indexOf(f) >= 0 ? "ecom" : null);
+    const other = owner === "drama" ? "Episodic / 短剧自动化" : "Commerce / 电商素材";
+    const cur = SCENES[scene].label;
+    const why = (owner && owner !== scene)
+      ? "你填的这把 <b>Dify Key 指向「" + SCENES[owner].label + "」工作流</b>，但当前跑的是「" + cur + "」场景。两套场景是两个独立的 Dify 应用：它要求必填 <code>" + esc(f) + "</code>，而当前表单里根本没有这个字段。"
+      : "这套 Dify 工作流的开始节点要求必填 <code>" + esc(f) + "</code>，页面没有传，多半是导入的 DSL 版本与页面不一致。";
+    return "<b>这不是程序坏了，是 Dify 在校验「开始」节点的必填参数。</b><br>" + why +
+      "<br><b>怎么办（推荐第 1 条）：</b>① 点下面按钮切回<b>演示模式</b>，零密钥、立刻能跑，交作业足够；② 或切到「" + other + "」场景再用这把 Key；③ 或导入「" + cur + "」专用 DSL、发布后<b>在该场景下</b>填它自己的 <code>app-</code> Key。" +
+      "<br><span class='muted tiny'>原始报错：" + esc(raw) + "</span>" +
+      "<br><button class='cmdbtn' style='margin-top:9px' onclick='useDemoMode()'>切到演示模式并重新运行 →</button>";
+  }
+  if(mode === "dify"){
+    if(raw.indexOf("401") >= 0 || low.indexOf("invalid token") >= 0 || low.indexOf("access_token") >= 0)
+      return "<b>Dify 拒绝了这把 Key（401）。</b>常见原因：应用还没点「发布」、Key 已被删除、或者复制时带了空格。请到「访问 API」重新生成并粘贴；如果只是想看效果，切回演示模式即可，不需要 Key。";
+    if(low.indexOf("not_workflow_app") >= 0 || raw.indexOf("404") >= 0)
+      return "<b>这把 Key 对应的不是 Workflow 应用。</b>必须用「导入 DSL 文件」创建的 Workflow 应用，普通空白 Chatflow 不能跑 <code>/v1/workflows/run</code>。";
+    if(raw.indexOf("429") >= 0)
+      return "<b>Dify 触发限流或额度耗尽（429）。</b>等一会儿再试，或切回演示模式（零请求、零密钥）。";
+    if(raw.indexOf("500") >= 0 || low.indexOf("internal server error") >= 0)
+      return "<b>Dify 云端节点执行出错（500）。</b>多半是 LLM 节点额度或代码节点报错，去 Dify 的运行日志里看具体节点；本地演示模式不受影响。";
+  }
+  return raw; /* 自定义校验错误本身已含允许的 HTML 标签 */
+}
+/* 错误提示里的一键回到演示模式 */
+function useDemoMode(){
+  if(busy) return;
+  state.mode = "demo"; save(); renderModes(); updateModeHint(); clearAlert();
+  run();
 }
 
 /* ---------------- 服务探测 ---------------- */
@@ -853,7 +894,7 @@ async function run(){
     }
   }catch(e){
     clearInterval(pipeTimer); setPipe(5, "fail");
-    alertBox("err", "<b>ERROR / 运行失败：</b>" + e.message);
+    alertBox("err", "<b>ERROR / 运行失败：</b>" + explainError(mode, scene, e.message));
   }finally{
     busy = false;
     $("#runBtn").disabled = false; $("#runBtn").innerHTML = 'RUN WORKFLOW<small>运行工作流</small>';
